@@ -1066,8 +1066,10 @@
 
 .vfs-move-modal__body {
   padding: var(--spacing-2) var(--spacing-4);
-  max-height: 40vh;
+  height: min(40vh, 360px);
   overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-anchor: none;
 }
 
 .vfs-move-modal__footer {
@@ -1129,6 +1131,11 @@
 
 .vfs-move-modal__folder-title {
   flex: 1;
+}
+
+.vfs-move-modal__folder-title[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .vfs-move-modal__folder-title.is-selected {

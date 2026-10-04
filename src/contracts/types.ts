@@ -97,7 +97,7 @@ export interface VFSUIState {
   expandedOutlineH1Ids: Set<string>;
   selectedItemIds: Set<string>;
   creatingItem: { type: 'file' | 'directory'; parentPath: string | null; prevSelectedIds?: string[] } | null;
-  moveOperation: { isMoving: boolean; itemIds: string[] } | null;
+  moveOperation: { isMoving: boolean; itemIds: string[]; mode?: 'copy' | 'move' } | null;
   searchQuery: string;
   uiSettings: UISettings;
   tags: Map<string, TagInfo>;

@@ -197,10 +197,10 @@ export class VFSUIShell {
   }
   setQuery(query: string): void { this.statePort.dispatch({ type: 'SEARCH_QUERY_UPDATE', payload: { query } }); }
   setSelection(ids: string[]): void { this.statePort.dispatch({ type: 'ITEM_SELECTION_REPLACE', payload: { ids } }); }
-  allowsBulkAction(action: 'delete' | 'move', ids: string[]): boolean {
+  allowsBulkAction(action: 'delete' | 'move' | 'export' | 'copy', ids: string[]): boolean {
     this.setSelection(ids); return this.nodeList.allowsBulkAction(action);
   }
-  async runBulkAction(action: 'delete' | 'move', ids: string[]): Promise<void> {
+  async runBulkAction(action: 'delete' | 'move' | 'export' | 'copy', ids: string[]): Promise<void> {
     this.setSelection(ids); await this.nodeList.runBulkAction(action);
   }
   getSnapshot(): import('../contracts/source').BrowserSnapshot {
@@ -370,6 +370,12 @@ export class VFSUIShell {
     for (let index = 1; index <= parts.length; index++) {
       const parent = '/' + parts.slice(0, index).join('/');
       const state = this.statePort.getState();
+      const node = findNodeById(state.items, parent);
+      if (node?.metadata.custom._disabled === true) return;
+      if (!node) {
+        const raw = await this.engine?.driver.getNode(parent);
+        if (!raw || raw.metadata._disabled === true) return;
+      }
       if (findNodeById(state.items, parent)?.children === undefined) await this.engineAdapter.expandDirectory(parent, { restoreDescendants: false });
       else if (!state.expandedFolderIds.has(parent)) this.statePort.dispatch({ type: 'FOLDER_TOGGLE', payload: { folderId: parent } });
       await this.loadNavigationChildren(parent);
@@ -469,7 +475,7 @@ export class VFSUIShell {
           return <T extends keyof import('../contracts/commands').CommandMap>(
             command: T,
             payload: import('../contracts/commands').CommandMap[T]
-          ): void => {
+          ): void | Promise<void> => {
             if (command === 'nav:selectSession') {
               shell.navigationWasUserAction = true;
             }
@@ -487,7 +493,7 @@ export class VFSUIShell {
               }
             }
 
-            (target as ICommandPort).execute(command, payload);
+            return (target as ICommandPort).execute(command, payload);
           };
         }
         return Reflect.get(target, prop, _receiver);
@@ -514,6 +520,7 @@ export class VFSUIShell {
       doubleClickActivation: this.options.doubleClickActivation,
       directoryAction: this.options.directoryAction,
       onQuickDelete: this.options.onQuickDelete,
+      transferPolicy: this.options.transferPolicy,
       rowCreation: this.options.rowCreation,
       favoriteAction: this.options.favoriteAction,
       primaryAction: this.options.primaryAction,
@@ -573,6 +580,8 @@ export class VFSUIShell {
     globalAnchor.appendChild(this.instanceModalContainer);
 
     this.moveToModal = new MoveToModal({
+      presentation: this.presentation,
+      transferPolicy: this.options.transferPolicy,
       container: this.instanceModalContainer,
       store: this.statePort,
       commandBus: this.commandPort,

@@ -26,6 +26,18 @@ beforeEach(() => {
 // ── STATE_LOAD_SUCCESS ───────────────────────────────────────────────────────
 
 describe('STATE_LOAD_SUCCESS', () => {
+    it('drops removed root state while retaining saved descendants of an existing root', () => {
+        const from = '/folder:old', to = '/folder:new', keep = '/folder:kept';
+        store.dispatch({ type: 'STATE_LOAD_SUCCESS', payload: { items: [dir(from), dir(keep)], tags: new Map() } });
+        store.dispatch({ type: 'FOLDER_TOGGLE', payload: { folderId: from } });
+        store.dispatch({ type: 'SESSION_SELECT', payload: { sessionId: from } });
+        store.dispatch({ type: 'ITEM_SELECTION_REPLACE', payload: { ids: [from, keep + '/unloaded.md'] } });
+        store.dispatch({ type: 'STATE_LOAD_SUCCESS', payload: { items: [dir(to), dir(keep)], tags: new Map(), reconcilePaths: true } });
+        expect(store.getState().activeId).toBeNull();
+        expect(store.getState().selectedItemIds).toEqual(new Set([keep + '/unloaded.md']));
+        expect(store.getState().expandedFolderIds.has(from)).toBe(false);
+    });
+
     it('populates items and tags', () => {
         const item = file('f1');
         store.dispatch({ type: 'STATE_LOAD_SUCCESS', payload: { items: [item], tags: new Map() } });

@@ -122,11 +122,14 @@ export function assemble(
     const service = engine && new VFSService({
         engine,
         presentation,
+        transferItems: options.transferItems ? async (mode, ids, destination) => {
+            try { await options.transferItems!(mode, ids, destination); } finally { await engineAdapter.loadData({ silent: true }); }
+        } : undefined,
         defaultExtension: options.defaultExtension,
         newFileContent: options.fileCreation?.content,
     });
 
-    const engineAdapter = options.source ? new SourceAdapter(options.source, store, options.onError, presentation.fileIcon) : new EngineAdapter(engine!, store, registry, options.showFileExtensions ?? false, options.alwaysLoadedDirectories, options.hideGitignored ?? true);
+    const engineAdapter = options.source ? new SourceAdapter(options.source, store, options.onError, presentation.fileIcon) : new EngineAdapter(engine!, store, registry, options.showFileExtensions ?? false, options.alwaysLoadedDirectories, options.hideGitignored ?? true, !options.listItems);
 
     // Wire auto-expand: when a file is created inside an unexpanded directory,
     // trigger a full load so all siblings are visible (not just the new file).

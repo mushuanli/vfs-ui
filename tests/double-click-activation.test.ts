@@ -27,3 +27,18 @@ it('selects a project on one click, activates on double-click and keeps fold con
         expect(activate).toHaveBeenCalledOnce();
     } finally { ui.destroy(); host.remove(); await manager.dispose(); }
 });
+
+it('ignores obsolete reveal paths after refreshing a removed root', async () => {
+    const { manager } = await createVFS({ rootBackend: new MemoryBackend() });
+    const fs = await manager.openFileSystem('/');
+    await fs.driver.createDirectory({ parentPath: '/', name: 'old' });
+    const host = document.createElement('div'); document.body.append(host);
+    const ui = createVFSUI({ sessionListContainer: host, persistence: false, autoSelectFirst: false }, fs) as VFSUIShell;
+    const error = vi.spyOn(console, 'error');
+    try {
+        await ui.start(); await ui.expandPath('/old');
+        await fs.driver.delete(['/old']); await ui.refresh();
+        error.mockClear(); await ui.expandPath('/old/@files');
+        expect(error).not.toHaveBeenCalled(); expect(ui.getSnapshot().expandedIds).not.toContain('/old');
+    } finally { ui.destroy(); error.mockRestore(); host.remove(); await manager.dispose(); }
+});

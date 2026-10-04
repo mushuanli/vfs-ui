@@ -33,6 +33,8 @@ export class EngineAdapter {
         private readonly showFileExtensions = false,
         private readonly alwaysLoadedDirectories: string[] = [],
         private readonly hideGitignored = true,
+        // Host-projected rows may have identities outside the filesystem tree.
+        private readonly reconcilePaths = true,
     ) { }
 
     private async displayedChildren(path: string): Promise<FSNode[]> {
@@ -82,7 +84,7 @@ export class EngineAdapter {
             adapterDEBUG.dispatch('STATE_LOAD_SUCCESS', `${uiItems.length} items`);
             this.store.dispatch({
                 type: 'STATE_LOAD_SUCCESS',
-                payload: { items: uiItems, tags },
+                payload: { items: uiItems, tags, reconcilePaths: this.reconcilePaths },
             });
         } catch (error) {
             if (!this.current(revision)) return;
@@ -107,7 +109,7 @@ export class EngineAdapter {
         const walk = async (items: VFSNodeUI[]): Promise<void> => {
             for (const item of items) {
                 if (!this.current(revision)) return;
-                if (item.type !== 'directory' || !openBefore.has(item.id)) continue;
+                if (item.type !== 'directory' || item.metadata.custom._disabled === true || !openBefore.has(item.id)) continue;
                 const children = await this.displayedChildren(item.id);
                 const uiChildren = children.map(node =>
                     mapFSNodeToUIItem(node, this.iconResolver, undefined, this.showFileExtensions)
@@ -330,7 +332,7 @@ export class EngineAdapter {
     }
 
     async expandDirectory(folderId: string, options: { restoreDescendants?: boolean; expand?: boolean } = {}): Promise<void> {
-        if (!this.visible || this.loadingFolderIds.has(folderId)) return;
+        if (!this.visible || this.loadingFolderIds.has(folderId) || findNodeById(this.store.getState().items, folderId)?.metadata.custom._disabled === true) return;
         const revision = this.visibilityRevision;
         this.loadingFolderIds.add(folderId);
 

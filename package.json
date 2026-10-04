@@ -59,13 +59,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mushuanli/itookit.git",
-    "directory": "packages/vfs-ui"
+    "url": "git+ssh://git@github.com/mushuanli/vfs-ui.git"
   },
   "bugs": {
-    "url": "https://github.com/mushuanli/itookit/issues"
+    "url": "https://github.com/mushuanli/vfs-ui/issues"
   },
-  "homepage": "https://github.com/mushuanli/itookit/tree/main/packages/vfs-ui#readme",
+  "homepage": "https://github.com/mushuanli/vfs-ui#readme",
   "engines": {
     "node": ">=16.0.0"
   },
@@ -82,5 +81,6 @@
     "vite-plugin-dts": "^3.9.1",
     "vitest": "^1.6.1",
     "jsdom": "^27.2.0"
-  }
+  },
+  "packageManager": "pnpm@10.20.0"
 }

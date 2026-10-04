@@ -20,6 +20,7 @@ import { escapeHTML } from '../../../../utils/local';
 import { resolveRowPolicy, allowsRowAction } from '../../../../utils/row-policy';
 
 export interface ContextMenuCallbacks {
+  canTransfer?: (node: VFSNodeUI, mode: 'copy' | 'move') => boolean;
   showTagEditor: (options: {
     initialTags: string[];
     onSave: (tags: string[]) => void;
@@ -97,7 +98,7 @@ export class ContextMenuHandler {
     const items = this.contextMenuConfig?.bulkItems?.(selected, defaults) ?? defaults;
     if (selected.length !== ids.length || !selected.length) return [];
     return items.filter(entry => entry.type === 'separator' || entry.onClick || selected.every(node =>
-      allowsRowAction(entry.id, this.store.getState().readOnly, node)));
+      this.transferAllowed(entry.id, node) && allowsRowAction(entry.id, this.store.getState().readOnly, node)));
   }
   allows(action: string, item: VFSNodeUI | null = null): boolean {
     return this.actions(item).some(entry => entry.type !== 'separator' && entry.id === action && !entry.disabled);
@@ -165,6 +166,11 @@ export class ContextMenuHandler {
       return;
     }
 
+    if (action === 'bulk-copy') {
+      await this.commandBus.execute('bulk:copy', { itemIds: [...state.selectedItemIds] });
+      return;
+    }
+
     if (action === 'bulk-move') {
       this.commandBus.execute('bulk:move', {
         itemIds: [...state.selectedItemIds],
@@ -217,6 +223,7 @@ export class ContextMenuHandler {
       'duplicate',
       'delete',
       'moveTo',
+      'copyTo',
       'export',
       'create-in-folder-session',
       'create-in-folder-folder',
@@ -229,6 +236,8 @@ export class ContextMenuHandler {
           type,
           parentPath: contextItem.id,
         });
+      } else if (action === 'copyTo') {
+        await this.commandBus.execute('move:start', { itemIds: [contextItem.id], mode: 'copy' });
       } else if (action === 'moveTo') {
         this.commandBus.execute('move:start', { itemIds: [contextItem.id] });
       } else if (action === 'export') {
@@ -300,6 +309,7 @@ export class ContextMenuHandler {
     }
 
     items.push(
+      { id: 'copyTo', label: this.ui.t('workbench.copy'), iconHTML: FILE_ICONS.document },
       {
         id: 'rename',
         label: '重命名',
@@ -341,6 +351,7 @@ export class ContextMenuHandler {
 
   private getBulkContextMenuItems(count: number): MenuItem[] {
     return [
+      { id: 'bulk-copy', label: this.ui.t('workbench.copy'), iconHTML: FILE_ICONS.document },
       {
         id: 'bulk-export',
         label: `导出 ${count} 个项目`,
@@ -365,8 +376,13 @@ export class ContextMenuHandler {
     ];
   }
 
+  private transferAllowed(action: string, node: VFSNodeUI): boolean {
+    const mode = ['copyTo', 'bulk-copy'].includes(action) ? 'copy' : ['moveTo', 'bulk-move'].includes(action) ? 'move' : undefined;
+    return !mode || this.callbacks.canTransfer?.(node, mode) !== false;
+  }
+
   private filterPolicy(items: MenuItem[], node: VFSNodeUI): MenuItem[] {
-    return items.filter(entry => entry.type === 'separator' || allowsRowAction(entry.id, this.store.getState().readOnly, node));
+    return items.filter(entry => entry.type === 'separator' || this.transferAllowed(entry.id, node) && allowsRowAction(entry.id, this.store.getState().readOnly, node));
   }
 
   private buildContextMenuItems(item: VFSNodeUI): MenuItem[] {
@@ -378,7 +394,7 @@ export class ContextMenuHandler {
           .items(item, defaultItems)
           .filter(m => {
             if (m.type === 'separator') return true;
-            return (m.onClick || allowsRowAction(m.id, this.store.getState().readOnly, item)) && !(m.hidden && m.hidden(item));
+            return (m.onClick || this.transferAllowed(m.id, item) && allowsRowAction(m.id, this.store.getState().readOnly, item)) && !(m.hidden && m.hidden(item));
           });
       } catch (e) {
         console.error('Error executing custom contextMenu.items:', e);

@@ -23,6 +23,10 @@ export class BulkCommandHandler {
         this.unsubs.push(
             this.commandBus.on('bulk:delete', ({ itemIds }) => deleteFiles(this.store, this.service, itemIds, true)),
 
+            this.commandBus.on('bulk:copy', ({ itemIds }) => {
+                if (itemIds.length) this.store.dispatch({ type: 'MOVE_OPERATION_START', payload: { itemIds, mode: 'copy' } });
+            }),
+
             this.commandBus.on('bulk:move', ({ itemIds }) => {
                 itemIds = mutableEntryIds(this.store.getState().items, itemIds);
                 if (!itemIds.length) return;
@@ -32,12 +36,12 @@ export class BulkCommandHandler {
                 });
             }),
 
-            this.commandBus.on('move:start', ({ itemIds }) => {
-                itemIds = mutableEntryIds(this.store.getState().items, itemIds);
+            this.commandBus.on('move:start', ({ itemIds, mode }) => {
+                if (mode !== 'copy') itemIds = mutableEntryIds(this.store.getState().items, itemIds);
                 if (!itemIds.length) return;
                 this.store.dispatch({
                     type: 'MOVE_OPERATION_START',
-                    payload: { itemIds },
+                    payload: { itemIds, mode },
                 });
             }),
 

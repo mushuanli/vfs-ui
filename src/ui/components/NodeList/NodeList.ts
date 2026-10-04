@@ -173,6 +173,7 @@ export class NodeList extends BaseComponent<NodeListState> {
       {
         showTagEditor: opts => this.tagEditorPopover.show(opts),
         findItemById: id => this.findItemById(id),
+        canTransfer: options.transferPolicy?.source,
       },
       this.fileCreation?.label ?? 'File',
       options.engine?.capabilities.tags !== false,
@@ -510,8 +511,8 @@ export class NodeList extends BaseComponent<NodeListState> {
     const row = document.createElement('div'); row.dataset.itemId = itemId;
     this.contextMenuHandler.show(event, row);
   }
-  allowsBulkAction(action: 'delete' | 'move'): boolean { return this.contextMenuHandler.allows(`bulk-${action}`); }
-  runBulkAction(action: 'delete' | 'move'): Promise<void> { return this.contextMenuHandler.run(`bulk-${action}`); }
+  allowsBulkAction(action: 'delete' | 'move' | 'export' | 'copy'): boolean { return this.contextMenuHandler.allows(`bulk-${action}`); }
+  runBulkAction(action: 'delete' | 'move' | 'export' | 'copy'): Promise<void> { return this.contextMenuHandler.run(`bulk-${action}`); }
 
   private findItemById(itemId: string): VFSNodeUI | null {
     const find = (items: VFSNodeUI[], id: string): VFSNodeUI | null => {

@@ -150,3 +150,7 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 宿主可用 `titleHeader` 替换标题行，通过 `toolbarContainer` 将原有工具栏控件挂到宿主标题区（保留事件、上下文和权限检查），使用 `rowCreation` 在可写目录行提供创建图标；执行前重新检查同一 row-policy。`allowsBulkAction` / `runBulkAction` 复用 ContextMenuHandler 的批量菜单过滤、删除确认与移动选择器，宿主不直接操作 store 或复制授权逻辑。
 
 宿主目录详情与已打开列表通过 `getResourceIcon(node)` 复用节点显式图标、已注册文件类型图标及默认图标；图标容器使用 `file-type-icon` 复用资源浏览的浅色/深色主题配色。公共 `formatFileSize(bytes)` 提供 B、KiB、MiB 等易读大小，未知大小显示破折号。
+
+宿主目录详情的导出、复制到、移动到、删除调用 `allowsBulkAction` / `runBulkAction`，与右键菜单共用过滤和执行逻辑。“复制到”保留源文件并复用目标选择器；“复制副本”仍是原有单目录副本操作。目标选择器等待命令返回的 Promise，执行期间阻止重复确认，失败时保留目标并显示原因。
+
+`transferPolicy.source(node, mode)` / `destination(node, ids, mode)` 决定传输入口和可选目录；宿主可用 `transferItems(mode, ids, destination)` 将投影身份适配到授权文件视图。默认复制使用 vfs-core 的 `transferFileSystemEntry`。这些展示策略不替代底层文件系统权限校验。

@@ -119,6 +119,7 @@ export class VFSStore implements IStatePort {
           status: 'success',
           error: null,
         });
+        if (payload.reconcilePaths) this.reconcilePaths(draft);
       },
       'ITEMS_LOAD_START': () => {
         draft.status = 'loading';
@@ -174,7 +175,7 @@ export class VFSStore implements IStatePort {
       'SESSION_CREATE_SUCCESS': () => this.handleCreate(draft, payload),
       'FOLDER_CREATE_SUCCESS': () => this.handleCreate(draft, payload),
       'MOVE_OPERATION_START': () => {
-        draft.moveOperation = { isMoving: true, itemIds: payload.itemIds };
+        draft.moveOperation = { isMoving: true, itemIds: payload.itemIds, mode: payload.mode };
       },
       'MOVE_OPERATION_END': () => {
         draft.moveOperation = null;
@@ -386,6 +387,13 @@ export class VFSStore implements IStatePort {
     }
     if (!preserveCreation) draft.creatingItem = null;
     draft.tags = rebuildTagsMap(draft.items);
+  }
+
+  private reconcilePaths(draft: VFSUIState): void {
+    const present = (id: string) => !!findNodeById(draft.items, id) || draft.items.some(item => id.startsWith(item.id + '/'));
+    if (draft.activeId && !present(draft.activeId)) draft.activeId = null;
+    for (const ids of [draft.selectedItemIds, draft.expandedFolderIds, draft.expandedOutlineIds, draft.expandedOutlineH1Ids])
+      for (const id of ids) if (!present(id)) ids.delete(id);
   }
 
   private handleSessionSelect(draft: VFSUIState, sessionId: string | null): void {

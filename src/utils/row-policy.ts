@@ -49,13 +49,14 @@ export const resolveColumnReadOnly = (viewReadOnly: boolean, root: VFSNodeUI | u
   viewReadOnly || (!!root && isItemReadOnly(root));
 
 const WRITE_ACTIONS = new Set(['create-in-folder-session', 'create-in-folder-folder', 'duplicate', 'edit-tags', 'rename', 'moveTo', 'delete']);
-const ENTRY_ACTIONS = new Set(['rename', 'moveTo', 'delete']);
-const BULK_ACTIONS: Record<string, string> = { 'bulk-delete': 'delete', 'bulk-move': 'moveTo', 'bulk-edit-tags': 'edit-tags' };
+const ENTRY_ACTIONS = new Set(['rename', 'moveTo', 'copyTo', 'delete']);
+const BULK_ACTIONS: Record<string, string> = { 'bulk-copy': 'copyTo', 'bulk-delete': 'delete', 'bulk-move': 'moveTo', 'bulk-edit-tags': 'edit-tags' };
 
 /** Policy for built-in resource commands; explicit host callbacks own their authorization. */
 export function allowsRowAction(action: string, viewReadOnly: boolean, node: VFSNodeUI): boolean {
   const policy = resolveRowPolicy(viewReadOnly, node);
   const mutation = BULK_ACTIONS[action] ?? action;
+  if (mutation === 'copyTo' && node.kind === 'group') return false;
   if (WRITE_ACTIONS.has(mutation) && (policy.readOnly || node.kind === 'group')) return false;
   return !(ENTRY_ACTIONS.has(mutation) && policy.fixed);
 }

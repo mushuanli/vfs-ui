@@ -85,10 +85,26 @@ const browser = createVFSBrowser({
 原先从 common/ui-common 导入的 Heading、TaskCounts、菜单和标签工厂类型，现可直接从 vfs-ui 导入。原有结构兼容实现继续可用。需要跟随宿主的语言、图标或启动统计时，通过 `presentation` 注入；MindOS 的示例在 `packages/app-shell/src/browser/vfs-presentation.ts`。
 
 - [接口与组件](./doc/components.md)
-- [边界与迁移记录](../../doc/design/vfs-ui-boundary-review.md)
+- [边界与迁移记录](https://github.com/mushuanli/itookit/blob/main/doc/design/vfs-ui-boundary-review.md)
 - [开发说明](./AGENTS.md)
 
 ```bash
 pnpm --filter @itookit/vfs-ui build
 pnpm --filter @itookit/vfs-ui test
 ```
+
+## 独立仓库开发
+
+```bash
+git clone --recurse-submodules git@github.com:mushuanli/vfs-ui.git
+cd vfs-ui
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm pack
+```
+
+`vendor/vfs-core` 是开发用 Git 子模块，固定包含本仓库所需 API 的 core 提交；它不被打入 UI 发布产物。运行时内部依赖仍只有 `@itookit/vfs-core`。当前源码使用该提交新增的文件传输 API；发布 npm 前，必须先发布包含这些 API 的 core 版本，并更新 UI 的版本约束，不能仅依赖同版本号代表内容一致。
+
+在 itookit 中，本仓库作为 `packages/vfs-ui` 子模块使用，pnpm 仍链接顶层工作区的 vfs-core。首次克隆 itookit 后执行 `git submodule update --init packages/vfs-core packages/vfs-ui`；只在独立开发 UI 时需要初始化 vendor/vfs-core。

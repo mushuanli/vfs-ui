@@ -1,6 +1,6 @@
 # VFS UI 设计
 
-当前契约及实现说明见 [组件与接口](./doc/components.md)，设计取舍及应用层迁移见 [边界审查](../../doc/design/vfs-ui-boundary-review.md)。
+当前契约及实现说明见 [组件与接口](./doc/components.md)，设计取舍及应用层迁移见 [边界审查](https://github.com/mushuanli/itookit/blob/main/doc/design/vfs-ui-boundary-review.md)。
 
 依赖方向：应用装配 → vfs-ui → vfs-core。公共接入接口归本包所有，宿主通过结构兼容接口适配；不依赖 common、ui-common 或 immer。
 

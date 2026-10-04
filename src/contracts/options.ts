@@ -19,6 +19,14 @@ export interface DirectoryAction {
 
 /** Host-owned row actions shared by the shell and the list that renders them. */
 export interface VFSRowActionOptions {
+    /** Host authorization for source and destination identities (rechecked by the transfer service). */
+    transferPolicy?: {
+        /** Independent destination catalog; parent omitted lists roots. */
+        targets?(ids: string[], mode: 'copy' | 'move', parent?: string): Promise<VFSNodeUI[]>;
+        source(node: VFSNodeUI, mode: 'copy' | 'move'): boolean;
+        destination(node: VFSNodeUI | null, ids: string[], mode: 'copy' | 'move'): boolean;
+    };
+    transferItems?: (mode: 'copy' | 'move', ids: string[], destination: string | null) => Promise<void>;
     /** Inline creation controls on writable directory rows; the host owns the target semantics. */
     rowCreation?: { visible(node: VFSNodeUI): boolean; run(node: VFSNodeUI, type: 'file' | 'directory'): Promise<void> };
     /** Favorite state and toggle; rows without state hide the control. */

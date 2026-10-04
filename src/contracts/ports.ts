@@ -46,6 +46,7 @@ export interface IDataOperationPort {
   createDirectory(options: { title?: string; parentPath?: string | null }): Promise<any>;
   renameItem(nodeId: string, newTitle: string): Promise<void>;
   deleteItems(nodeIds: string[]): Promise<void>;
+  copyItems?(options: { itemIds: string[]; targetId: string | null }): Promise<void>;
   moveItems(options: { itemIds: string[]; targetId: string | null }): Promise<void>;
   updateMultipleItemsTags(options: { itemIds: string[]; tags: string[] }): Promise<void>;
   findItemById(itemId: string): Promise<any>;

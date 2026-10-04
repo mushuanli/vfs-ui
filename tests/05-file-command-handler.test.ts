@@ -94,8 +94,8 @@ describe('FileCommandHandler — command → engine wiring', () => {
 
     it('file:move deduplicates selected resources before calling the driver', async () => {
         engine.driver.move = vi.fn(async () => {});
-        await commandBus.execute('file:move', { itemIds: ['a', 'a', 'b'], targetId: '/target', position: 'into' });
-        expect(engine.driver.move).toHaveBeenCalledWith(['a', 'b'], '/target');
+        await commandBus.execute('file:move', { itemIds: ['/a', '/a', '/b'], targetId: '/target', position: 'into' });
+        expect(engine.driver.move).toHaveBeenCalledWith(['/a', '/b'], '/target');
     });
 
     it('file:duplicate decodes text content before applying a registered transformer', async () => {

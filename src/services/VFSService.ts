@@ -5,10 +5,11 @@ import { defaultPresentation, type VFSPresentation } from '../contracts/presenta
  */
 import type { IFileSystem, FSNode } from '@itookit/vfs-core';
 import { buildRenamedFilename, formatDefaultFileTitle } from '../utils/local';
-import { FSError, normalizeVirtualPath } from '@itookit/vfs-core';
+import { FSError, normalizeVirtualPath, transferFileSystemEntry } from '@itookit/vfs-core';
 import type { IDataOperationPort } from '../contracts/ports';
 
 export interface VFSServiceDependencies {
+  transferItems?: import('../contracts/options').VFSRowActionOptions['transferItems'];
   engine: IFileSystem;
   presentation?: VFSPresentation;
   newFileContent?: string;
@@ -29,6 +30,7 @@ export interface CreateMultipleFilesOptions {
 const EXT_REGEX = /\.[a-zA-Z0-9]{1,10}$/;
 
 export class VFSService implements IDataOperationPort {
+  private readonly transferItems?: VFSServiceDependencies['transferItems'];
   private readonly ui: VFSPresentation;
   private readonly engine: IFileSystem;
   private readonly newFileContent: string;
@@ -36,12 +38,14 @@ export class VFSService implements IDataOperationPort {
 
   constructor({
     engine,
+    transferItems,
     presentation = defaultPresentation,
     newFileContent = '',
     defaultExtension = '.md',
   }: VFSServiceDependencies) {
     if (!engine) throw new Error('VFSService requires an IFileSystem.');
     this.engine = engine;
+    this.transferItems = transferItems;
     this.ui = presentation;
     this.newFileContent = newFileContent;
     this.defaultExtension = defaultExtension.startsWith('.')
@@ -164,13 +168,31 @@ export class VFSService implements IDataOperationPort {
   deleteItems = (nodeIds: string[]): Promise<void> =>
     this.engine.driver.delete(nodeIds);
 
+  private assertTransferDestination(ids: string[], target: string | null): void {
+    const destination = normalizeVirtualPath(target ?? '/');
+    if (ids.some(id => {
+      const source = normalizeVirtualPath(id);
+      return destination === (source.slice(0, source.lastIndexOf('/')) || '/');
+    })) throw new FSError('EINVAL', 'Transfer destination is already the source directory');
+  }
+
+  copyItems = async ({ itemIds, targetId }: { itemIds: string[]; targetId: string | null }): Promise<void> => {
+    this.assertTransferDestination(itemIds, targetId);
+    if (this.transferItems) return this.transferItems('copy', itemIds, targetId);
+    const roots = itemIds.filter(id => !itemIds.some(parent => id !== parent && id.startsWith(parent + '/')));
+    for (const id of roots) await transferFileSystemEntry(this.engine, id, this.engine, targetId ?? '/');
+  };
+
   moveItems = ({
     itemIds,
     targetId,
   }: {
     itemIds: string[];
     targetId: string | null;
-  }): Promise<void> => this.engine.driver.move(itemIds, targetId);
+  } ): Promise<void> => {
+    this.assertTransferDestination(itemIds, targetId);
+    return this.transferItems ? this.transferItems('move', itemIds, targetId) : this.engine.driver.move(itemIds, targetId);
+  };
 
   updateMultipleItemsTags = async ({
     itemIds,

@@ -72,6 +72,11 @@ export class FileCommandHandler {
         }
       }),
 
+      this.commandBus.on('file:copy', async payload => {
+        if (!this.service.copyItems) throw new Error('Copy is unavailable');
+        await this.service.copyItems(payload);
+      }),
+
       this.commandBus.on('file:move', async ({ itemIds, targetId }) => {
                 itemIds = mutableEntryIds(this.store.getState().items, itemIds);
                 if (!itemIds.length) return;

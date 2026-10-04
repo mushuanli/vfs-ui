@@ -22,6 +22,7 @@ export interface CommandMap {
   'file:duplicate': { itemId: string };
   'file:delete': { itemIds: string[] };
   'file:rename': { itemId: string; newTitle: string };
+  'file:copy': { itemIds: string[]; targetId: string | null };
   'file:move': { itemIds: string[]; targetId: string | null; position?: 'before' | 'after' | 'into' };
   'file:import': { parentPath: string | null };
   'file:export': { itemIds: string[] };
@@ -47,11 +48,12 @@ export interface CommandMap {
   'selection:selectAll': { visibleItemIds: string[] };
 
   // --- Move Modal ---
-  'move:start': { itemIds: string[] };
+  'move:start': { itemIds: string[]; mode?: 'copy' | 'move' };
   'move:end': void;
 
   // --- Bulk ---
   'bulk:delete': { itemIds: string[] };
+  'bulk:copy': { itemIds: string[] };
   'bulk:move': { itemIds: string[] };
   'bulk:editTags': { itemIds: string[]; position: { x: number; y: number } };
 
