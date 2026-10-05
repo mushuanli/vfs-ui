@@ -10,7 +10,7 @@ export * from './contracts/types';
 export { createLocalStorageUIPersistence, readUISnapshot, uiSnapshot, UI_STATE_VERSION, type UISnapshot, type RestoredUISnapshot, type UIPersistencePort } from './contracts/persistence';
 export type { FileCreationConfig, DirectoryAction, VFSRowActionOptions } from './contracts/options';
 export type { VFSColumnsOptions } from './shell/ColumnLayout';
-export type { VFSToolbarOptions, VFSToolbarContext, VFSToolbarAction } from './ui/components/NodeList/toolbar';
+export type { VFSToolbarOptions, VFSToolbarContext, VFSToolbarAction, VFSActionDefinition, VFSActionContext, VFSActionPlacement } from './ui/components/NodeList/toolbar';
 
 export { createVFSBrowser, VFSBrowser, type BrowserOptions } from './browser/Browser';
 export { fromVFS, type VFSDataOptions } from './browser/from-vfs';
@@ -32,3 +32,5 @@ export type { VFSPresentationOptions, VFSPresentation, VFSIconName } from './con
 export type { Translate } from './utils/i18n';
 export type { Suggestion, IAutocompleteSource, TagEditorInstance, ResourceListOptions } from './contracts/components';
 export { EngineTagSource } from './mention/EngineTagSource';
+
+export { ScopeSelector, type ScopeOption, type ScopeSelectorOptions } from './ui/components/ScopeSelector';

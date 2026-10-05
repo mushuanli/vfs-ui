@@ -20,6 +20,7 @@ import { escapeHTML } from '../../../../utils/local';
 import { resolveRowPolicy, allowsRowAction } from '../../../../utils/row-policy';
 
 export interface ContextMenuCallbacks {
+  additionalItems?(node: VFSNodeUI): MenuItem[];
   canTransfer?: (node: VFSNodeUI, mode: 'copy' | 'move') => boolean;
   showTagEditor: (options: {
     initialTags: string[];
@@ -46,7 +47,7 @@ export class ContextMenuHandler {
     private readonly ui: VFSPresentation = defaultPresentation,
   ) {}
 
-  show(event: MouseEvent, itemEl: HTMLElement): void {
+  show(event: MouseEvent, itemEl: HTMLElement, singleTarget = false): void {
     event.preventDefault();
     event.stopPropagation();
     this.hide();
@@ -59,7 +60,11 @@ export class ContextMenuHandler {
     let menuItems: MenuItem[] | undefined;
     let contextItem: VFSNodeUI | null = null;
 
-    if (selectedItemIds.size > 1 && isTargetSelected) {
+    if (singleTarget) {
+      contextItem = this.callbacks.findItemById(itemId);
+      if (!contextItem) return;
+      menuItems = this.buildContextMenuItems(contextItem);
+    } else if (selectedItemIds.size > 1 && isTargetSelected) {
       menuItems = this.actions(null);
 
     } else {
@@ -134,7 +139,7 @@ export class ContextMenuHandler {
         'button[data-action]'
       );
       if (!actionEl || actionEl.disabled) return;
-      await this.run(actionEl.dataset.action!, this.store.getState().selectedItemIds.size > 1 ? null : contextItem, { x, y }).catch(() => {});
+      await this.run(actionEl.dataset.action!, contextItem, { x, y }).catch(() => {});
       this.hide();
     });
 
@@ -386,7 +391,9 @@ export class ContextMenuHandler {
   }
 
   private buildContextMenuItems(item: VFSNodeUI): MenuItem[] {
-    const defaultItems = this.getDefaultContextMenuItems(item);
+    const additional = this.callbacks.additionalItems?.(item) ?? [];
+    const ids = new Set(additional.flatMap(entry => entry.type === 'separator' ? [] : [entry.id]));
+    const defaultItems = [...this.getDefaultContextMenuItems(item).filter(entry => entry.type === 'separator' || !ids.has(entry.id)), ...additional];
 
     if (this.contextMenuConfig?.items) {
       try {

@@ -5,7 +5,7 @@ import { resolveRowPolicy, type RowPolicy } from '../../../utils/row-policy';
 import type { DirectoryAction, VFSRowActionOptions } from '../../../contracts/options';
 import { ActionRunner } from '../../../interaction/ActionRunner';
 import type { VFSListSort } from '../../../contracts/types';
-import { toolbarHTML, type VFSToolbarOptions, type VFSToolbarAction } from './toolbar';
+import { actionMenuItems, actionVisible, type VFSActionContext, toolbarHTML, type VFSToolbarOptions, type VFSToolbarAction } from './toolbar';
 /**
  * @file vfs-ui/ui/components/NodeList/NodeList.ts
  * @desc Main file list component. Orchestrates handlers and rendering.
@@ -174,6 +174,8 @@ export class NodeList extends BaseComponent<NodeListState> {
         showTagEditor: opts => this.tagEditorPopover.show(opts),
         findItemById: id => this.findItemById(id),
         canTransfer: options.transferPolicy?.source,
+        additionalItems: item => actionMenuItems(this.toolbarOptions.definitions ?? [], this.actionContext(item),
+          (id, target) => this.executeDefinedAction(id, target)),
       },
       this.fileCreation?.label ?? 'File',
       options.engine?.capabilities.tags !== false,
@@ -297,9 +299,39 @@ export class NodeList extends BaseComponent<NodeListState> {
     const readOnly = this.effectiveReadOnly(parentPath ? this.findItemById(parentPath) : null);
     for (const button of this.newControlsEl.querySelectorAll<HTMLButtonElement>('[data-action]')) {
       const action = button.dataset.action ?? '';
+      const definition = this.toolbarOptions.definitions?.find(entry => entry.id === action);
+      if (definition) {
+        const context = this.actionContext();
+        button.hidden = !actionVisible(definition, context);
+        button.disabled = this.actions.isPending(action) || (definition.disabled?.(context) ?? false);
+        continue;
+      }
       if (!CREATION_ACTIONS.has(action)) continue;
       button.disabled = readOnly || this.toolbarOptions.items?.some(item => item.id === action && item.disabled) === true;
     }
+  }
+
+  private actionContext(item?: VFSNodeUI): VFSActionContext {
+    const state = this.store.getState();
+    const selectedIds = item ? [item.id] : state.selectedItemIds.size ? [...state.selectedItemIds] : state.activeId ? [state.activeId] : [];
+    const target = item ?? this.findItemById(selectedIds[0] ?? '');
+    const parentPath = item ? (item.type === 'directory' ? item.id : item.parentId ?? item.metadata.parentPath ?? null)
+      : this.itemActionHandler?.getTargetParentId(new Set(selectedIds), id => this.findItemById(id)) ?? this.rootPath?.() ?? null;
+    return { origin: item ? 'menu' : 'toolbar', target, selectedIds, activeId: item?.id ?? state.activeId,
+      parentPath, readonly: this.effectiveReadOnly(target) };
+  }
+
+  private runDefinedAction(id: string, item?: VFSNodeUI): Promise<void> {
+    return this.actions.run(id, signal => this.executeDefinedAction(id, item, signal));
+  }
+
+  private async executeDefinedAction(id: string, item?: VFSNodeUI, signal = this.actions.signal): Promise<void> {
+    const target = item ? this.findItemById(item.id) : undefined;
+    if (item && !target) return;
+    const context = this.actionContext(target ?? undefined);
+    const action = this.toolbarOptions.definitions?.find(entry => entry.id === id);
+    if (!action || !actionVisible(action, context) || action.disabled?.(context)) return;
+    await action.run(context, signal);
   }
 
   private handleNewControlsClick = (event: MouseEvent): void => {
@@ -314,6 +346,11 @@ export class NodeList extends BaseComponent<NodeListState> {
     );
 
     const selectedIds = this.state.selectedItemIds.size ? [...this.state.selectedItemIds] : this.state.activeId ? [this.state.activeId] : [];
+    if (this.toolbarOptions.definitions?.some(entry => entry.id === action)) {
+      const button = actionEl as HTMLButtonElement; button.disabled = true;
+      void this.runDefinedAction(action).catch(() => {}).finally(() => this.syncCreationControls());
+      return;
+    }
     const custom = this.toolbarOptions.actions?.[action];
     if (custom) {
       const button = actionEl as HTMLButtonElement; button.disabled = true;
@@ -509,7 +546,7 @@ export class NodeList extends BaseComponent<NodeListState> {
   /** Hosts reuse row policy and menu dispatch from a directory details view. */
   showItemMenu(event: MouseEvent, itemId: string): void {
     const row = document.createElement('div'); row.dataset.itemId = itemId;
-    this.contextMenuHandler.show(event, row);
+    this.contextMenuHandler.show(event, row, true);
   }
   allowsBulkAction(action: 'delete' | 'move' | 'export' | 'copy'): boolean { return this.contextMenuHandler.allows(`bulk-${action}`); }
   runBulkAction(action: 'delete' | 'move' | 'export' | 'copy'): Promise<void> { return this.contextMenuHandler.run(`bulk-${action}`); }
@@ -525,7 +562,7 @@ export class NodeList extends BaseComponent<NodeListState> {
       }
       return null;
     };
-    return find(this.state.items, itemId) ?? find(this.store.getState().items, itemId);
+    return find(this.state.items ?? [], itemId) ?? find(this.store.getState().items, itemId);
   }
 
   private commitItemCreation(inputElement: HTMLInputElement): void {

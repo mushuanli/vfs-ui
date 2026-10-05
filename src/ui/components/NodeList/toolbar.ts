@@ -1,9 +1,37 @@
 import { defaultPresentation, type VFSPresentation } from '../../../contracts/presentation';
+import type { VFSNodeUI, MenuItem } from '../../../contracts/types';
 import { escapeHTML } from '../../../utils/local';
 
 export type VFSToolbarAction = string;
 export interface VFSToolbarContext { selectedIds: string[]; activeId: string | null; parentPath: string | null }
+export interface VFSActionContext extends VFSToolbarContext {
+    origin: 'toolbar' | 'menu';
+    target: VFSNodeUI | null;
+    readonly: boolean;
+}
+export type VFSActionPlacement = 'toolbar' | 'menu' | 'both' | 'hidden';
+/** One host-owned command definition shared by toolbar and resource menu. */
+export interface VFSActionDefinition {
+    id: string;
+    label: string;
+    iconHTML?: string;
+    placement: VFSActionPlacement | ((context: VFSActionContext) => VFSActionPlacement);
+    disabled?(context: VFSActionContext): boolean;
+    run(context: VFSActionContext, signal: AbortSignal): Promise<void>;
+}
+export function actionVisible(action: VFSActionDefinition, context: VFSActionContext): boolean {
+    const placement = typeof action.placement === 'function' ? action.placement(context) : action.placement;
+    return placement === 'both' || placement === context.origin;
+}
+export function actionMenuItems(definitions: readonly VFSActionDefinition[], context: VFSActionContext,
+    run: (id: string, item: VFSNodeUI) => Promise<void>): MenuItem[] {
+    return definitions.filter(action => actionVisible(action, context)).map(action => ({
+        id: action.id, label: action.label, iconHTML: action.iconHTML, disabled: action.disabled?.(context),
+        onClick: item => run(action.id, item),
+    }));
+}
 export interface VFSToolbarOptions {
+    definitions?: readonly VFSActionDefinition[];
     items?: readonly { id: string; label: string; disabled?: boolean }[];
     hiddenActions?: VFSToolbarAction[];
     fileLabel?: string;
@@ -15,6 +43,8 @@ export interface VFSToolbarOptions {
 }
 
 export function toolbarHTML(options: VFSToolbarOptions, fileLabel: string, ui: VFSPresentation = defaultPresentation): string {
+    if (options.definitions) return options.definitions.map(action =>
+        `<button type="button" class="vfs-node-list__new-btn${action.iconHTML ? ' vfs-node-list__new-btn--icon' : ''}" data-action="${escapeHTML(action.id)}" title="${escapeHTML(action.label)}" aria-label="${escapeHTML(action.label)}">${action.iconHTML ?? ''}<span class="vfs-node-list__button-label">${escapeHTML(action.label)}</span></button>`).join('');
     if (options.items) return options.items.map(item => `<button type="button" class="vfs-node-list__new-btn" data-action="${escapeHTML(item.id)}" ${item.disabled ? 'disabled' : ''}>${escapeHTML(item.label)}</button>`).join('');
     const labels: Record<string, string> = { 'create-file': options.fileLabel ?? fileLabel, 'create-directory': options.directoryLabel ?? ui.t('vfs.toolbar.directory'),
         import: ui.t('vfs.toolbar.import'), export: ui.t('vfs.toolbar.export') };

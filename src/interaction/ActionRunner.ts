@@ -5,6 +5,8 @@ export class ActionRunner {
   private readonly pending = new Map<string, Promise<void>>();
   private readonly abort = new AbortController();
   constructor(private readonly report: (error: unknown) => void = error => alert(describeErrorReason(error))) {}
+  isPending(id: string): boolean { return this.pending.has(id); }
+  get signal(): AbortSignal { return this.abort.signal; }
   run(id: string, operation: (signal: AbortSignal) => void | Promise<void>): Promise<void> {
     if (this.abort.signal.aborted) return Promise.resolve();
     const current = this.pending.get(id);

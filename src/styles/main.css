@@ -122,6 +122,7 @@
   cursor: pointer;
   transition: background-color 120ms, border-color 120ms;
 }
+.vfs-node-list__new-btn[hidden] { display: none; }
 .vfs-node-list__new-btn:hover {
   background: var(--mm-sidebar-bg, #f8fafc);
   border-color: var(--primary-color, #6366f1);

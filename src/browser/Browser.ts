@@ -30,7 +30,8 @@ export class VFSBrowser {
     this.shell = new VFSUIShell({ sessionListContainer: options.container, source: options.source,
       title: options.title, presentation: options.presentation, sort: options.sort, autoSelectFirst: false, persistence: false, onError: options.onError,
       cardDirectory: node => node.metadata.custom.browserPresentation === 'drawer',
-      contextMenu: { items: item => this.menu('menu', item), bulkItems: () => this.menu('selection') },
+      contextMenu: { items: (_item, defaults) => defaults.filter(entry => entry.type !== 'separator'
+        && options.actions?.some(action => action.id === entry.id)), bulkItems: () => this.menu('selection') },
     });
     this.cleanups.push(this.shell.on('stateChanged', () => this.toolbar()));
     this.cleanups.push(this.shell.on('sessionSelected', ({ item }) => { if (item) options.onActivate?.(resource(item)); }));
@@ -52,15 +53,20 @@ export class VFSBrowser {
     if (!this.abort.signal.aborted) await this.shell.refresh();
   }
   private menu(placement: 'menu' | 'selection', target?: VFSNodeUI) {
-    return this.available(placement, target).map(action => ({ id: action.id, label: action.label,
+    return this.available(placement, target).map(action => ({ id: action.id, label: action.label, iconHTML: action.iconHTML,
       disabled: action.state?.(this.context(target)).enabled === false,
       onClick: () => this.execute(action, target) }));
   }
   private toolbar(): void {
-    const actions = this.available('toolbar');
-    this.shell.setToolbar({ items: actions.map(action => ({ id: action.id, label: action.label,
-      disabled: action.state?.(this.context()).enabled === false })),
-      actions: Object.fromEntries(actions.map(action => [action.id, () => this.execute(action)])) });
+    this.shell.setToolbar({ definitions: (this.options.actions ?? []).map(action => ({
+      id: action.id, label: action.label, iconHTML: action.iconHTML,
+      placement: context => {
+        const target = context.origin === 'menu' ? context.target ?? undefined : undefined;
+        return this.available(context.origin, target).includes(action) ? context.origin : 'hidden';
+      },
+      disabled: context => action.state?.(this.context(context.origin === 'menu' ? context.target ?? undefined : undefined)).enabled === false,
+      run: context => this.execute(action, context.origin === 'menu' ? context.target ?? undefined : undefined),
+    })) });
   }
   start(): Promise<void> { return this.shell.start().then(() => {}); }
   reveal(id: string): Promise<void> { return this.shell.selectPath(id); }

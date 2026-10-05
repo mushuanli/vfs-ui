@@ -154,3 +154,11 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 宿主目录详情的导出、复制到、移动到、删除调用 `allowsBulkAction` / `runBulkAction`，与右键菜单共用过滤和执行逻辑。“复制到”保留源文件并复用目标选择器；“复制副本”仍是原有单目录副本操作。目标选择器等待命令返回的 Promise，执行期间阻止重复确认，失败时保留目标并显示原因。
 
 `transferPolicy.source(node, mode)` / `destination(node, ids, mode)` 决定传输入口和可选目录；宿主可用 `transferItems(mode, ids, destination)` 将投影身份适配到授权文件视图。默认复制使用 vfs-core 的 `transferFileSystemEntry`。这些展示策略不替代底层文件系统权限校验。
+
+## Shared actions and scope selection
+
+`toolbarOptions.definitions` supplies one `VFSActionDefinition` per host command. Each definition owns its label, trusted `iconHTML`, placement (`toolbar`, `menu`, `both`, `hidden`, or a context callback), disabled predicate and asynchronous `run(context, signal)`. The same definition renders in toolbars and resource menus; legacy `items` / `actions` remain supported. Definitions take precedence over legacy toolbar rendering. Host context-menu filtering remains authoritative.
+
+`VFSActionContext.origin` distinguishes toolbar and menu entry points. Toolbar context uses selection, then the active row; menu context targets exactly its resource (`selectedIds: [target.id]`) and uses a directory itself or a file's parent as `parentPath`. Placement and disabled state are checked again before execution. The list shares its ActionRunner across both entry points, awaits the returned promise, prevents concurrent calls of the same action ID and reports a failure once through `onError`. Host predicates and application commands remain responsible for domain authorization.
+
+`ScopeSelector` provides an accessible select element. Hosts call `update(options, currentId)` and implement asynchronous `select(id, signal)`. Pending selection disables the control; settlement restores the latest host-supplied value, so failed choices do not replace the current scope. `destroy()` aborts its signal and detaches its listener. Project names, creation entries and scope projection belong to the host. Drawer-style directory presentation remains available through `cardDirectory` / BrowserSource presentation; it does not impose project semantics.

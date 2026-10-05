@@ -7,6 +7,7 @@ export interface ActionContext {
 export interface BrowserAction {
   readonly id: string;
   readonly label: string;
+  readonly iconHTML?: string;
   readonly placements: readonly ('toolbar' | 'menu' | 'selection')[];
   state?(context: ActionContext): { visible: boolean; enabled: boolean; reason?: string };
   run(context: ActionContext, signal: AbortSignal): Promise<void>;

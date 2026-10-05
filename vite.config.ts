@@ -15,5 +15,5 @@ export default defineConfig({
                 assetFileNames: asset => asset.name?.endsWith('.css') ? 'style.css' : asset.name ?? 'asset' },
         },
     },
-    plugins: [dts({ entryRoot: 'src', outDir: 'dist', insertTypesEntry: true })],
+    plugins: [dts({ entryRoot: 'src', outDir: 'dist', insertTypesEntry: true, rollupTypes: true })],
 });
