@@ -158,7 +158,9 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 
 宿主目录详情以 `getSnapshot().selectedIds` 为选择来源，通过 `setSelection(ids)` 回写，并订阅 `stateChanged` 更新勾选与全选状态。页面刷新、筛选及重新打开列表仍从同一来源恢复，避免正文和侧栏各自持有选择状态。
 
-宿主可用 `titleHeader` 替换标题行，通过 `toolbarContainer` 将原有工具栏控件挂到宿主标题区（保留事件、上下文和权限检查），使用 `rowCreation` 在可写目录行提供创建图标；执行前重新检查同一 row-policy。`allowsBulkAction` / `runBulkAction` 复用 ContextMenuHandler 的批量菜单过滤、删除确认与移动选择器，宿主不直接操作 store 或复制授权逻辑。
+宿主可用 `titleHeader` 替换标题行；插槽自动占满可用宽度且不额外添加内边距，宿主负责标题内容的布局与留白。通过 `toolbarContainer` 将原有工具栏控件挂到宿主标题区（保留事件、上下文和权限检查），使用 `rowCreation` 在可写目录行提供创建图标；执行前重新检查同一 row-policy。`allowsBulkAction` / `runBulkAction` 复用 ContextMenuHandler 的批量菜单过滤、删除确认与移动选择器，宿主不直接操作 store 或复制授权逻辑。
+
+未提供 `titleHeader` 的普通侧栏使用统一的标题、搜索区和列表留白：新建文件为主色按钮，新建目录为描边按钮，导入导出为轻量图标按钮；触屏控件至少 44px，窄侧栏将创建操作排在第一行。创建图标复用实例的 `presentation.icons.addFile/addFolder`。可通过公开 CSS 变量 `--vfs-primary-action-bg`、`--vfs-primary-action-text` 设置主操作颜色；项目等自定义标题栏继续使用自己的布局和 `toolbarOptions.variant`。
 
 宿主目录详情与已打开列表通过 `getResourceIcon(node)` 复用节点显式图标、已注册文件类型图标及默认图标；图标容器使用 `file-type-icon` 复用资源浏览的浅色/深色主题配色。公共 `formatFileSize(bytes)` 提供 B、KiB、MiB 等易读大小，未知大小显示破折号。
 

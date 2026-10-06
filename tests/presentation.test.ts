@@ -12,13 +12,18 @@ it('keeps translations and action icons local to each browser instance', async (
     const fs = await manager.openFileSystem('/'); await fs.driver.createFile({ name: 'hello.md', content: '' });
     const english = container(), chinese = container(), trace = vi.fn(async (_label: string, work: () => Promise<unknown>) => work());
     const first = createVFSUI({ sessionListContainer: english, autoSelectFirst: false,
-        presentation: { locale: 'en', icons: { export: '<svg data-custom-export="true"></svg>' }, trace } }, fs);
+        presentation: { locale: 'en', icons: { export: '<svg data-custom-export="true"></svg>',
+            addFile: '<svg data-custom-add-file="true"></svg>', addFolder: '<svg data-custom-add-folder="true"></svg>' }, trace } }, fs);
     const second = createVFSUI({ sessionListContainer: chinese, autoSelectFirst: false }, fs);
     close.push(() => first.destroy(), () => second.destroy()); await first.start(); await second.start();
     expect(english.querySelector('[data-action="create-directory"]')!.textContent).toContain('Folder');
     expect(chinese.querySelector('[data-action="create-directory"]')!.textContent).toContain('目录');
     expect(english.querySelector('[data-custom-export]')).not.toBeNull();
+    expect(english.querySelector('[data-action="create-file"] [data-custom-add-file]')).not.toBeNull();
+    expect(english.querySelector('[data-action="create-directory"] [data-custom-add-folder]')).not.toBeNull();
     expect(chinese.querySelector('[data-custom-export]')).toBeNull();
+    expect(chinese.querySelector('[data-custom-add-file]')).toBeNull();
+    expect(chinese.querySelector('[data-custom-add-folder]')).toBeNull();
     expect(trace.mock.calls.map(call => call[0])).toEqual(['vfsUi.loadData', 'vfsUi.restoreExpansion']);
 });
 

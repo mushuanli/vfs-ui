@@ -128,7 +128,11 @@ export class NodeList extends BaseComponent<NodeListState> {
     this.searchEl = this.container.querySelector('.vfs-node-list__search')!;
     this.mainContainerEl = this.container.querySelector('.vfs-node-list')!;
     this.titleEl = this.container.querySelector('[data-ref="title"]')!;
-    if (options.titleHeader) this.container.querySelector('.vfs-node-list__title-bar')!.replaceChildren(options.titleHeader);
+    if (options.titleHeader) {
+      const titleBar = this.container.querySelector('.vfs-node-list__title-bar')!;
+      titleBar.classList.add('vfs-node-list__title-bar--custom');
+      titleBar.replaceChildren(options.titleHeader);
+    }
     this.newControlsEl = this.container.querySelector('[data-ref="new-controls"]')!;
     this.footerEl = this.container.querySelector('.vfs-node-list__footer')!;
     if (options.toolbar === 'compact') this.installCompactToolbar();
@@ -246,6 +250,7 @@ export class NodeList extends BaseComponent<NodeListState> {
   setToolbarOptions(options: VFSToolbarOptions): void {
     this.toolbarOptions = options;
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--plain', options.variant === 'plain');
+    this.newControlsEl.classList.toggle('vfs-node-list__new-controls--grouped', !options.definitions && !options.items && options.variant !== 'plain');
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--single-create', !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--transfer-only', !!options.hiddenActions?.includes('create-file') && !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.innerHTML = toolbarHTML(options, this.fileCreation?.label ?? this.ui.t('vfs.toolbar.file'), this.ui);
@@ -591,7 +596,7 @@ export class NodeList extends BaseComponent<NodeListState> {
     const searchPlaceholder = options.searchPlaceholder || '搜索 (tag:xx type:file|dir)...';
 
     this.container.innerHTML = `
-      <div class="vfs-node-list">
+      <div class="vfs-node-list${options.titleHeader ? '' : ' vfs-node-list--standard-header'}">
         <div class="vfs-node-list__title-bar">
           <h2 class="vfs-node-list__title" data-ref="title">${escapeHTML(options.title || '文件列表')}</h2>
         </div>

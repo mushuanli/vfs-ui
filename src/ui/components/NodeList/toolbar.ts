@@ -52,9 +52,15 @@ export function toolbarHTML(options: VFSToolbarOptions, fileLabel: string, ui: V
         import: ui.t('vfs.toolbar.import'), export: ui.t('vfs.toolbar.export') };
     const order: VFSToolbarAction[] = options.directoryFirst
         ? ['create-directory', 'create-file', 'import', 'export'] : ['create-file', 'create-directory', 'import', 'export'];
-    return order.filter(action => !options.hiddenActions?.includes(action)).map(action => {
+    const buttons = order.filter(action => !options.hiddenActions?.includes(action)).map(action => {
         const create = action.startsWith('create-'), label = labels[action];
         const title = create ? ui.t('vfs.toolbar.create', { name: label }) : label;
-        return `<button type="button" class="vfs-node-list__new-btn ${create ? '' : 'vfs-node-list__new-btn--icon'}" data-action="${action}" title="${escapeHTML(title)}" aria-label="${escapeHTML(title)}">${create ? '<span aria-hidden="true">+</span>' : ui.icon(action as 'import' | 'export')}<span class="vfs-node-list__button-label">${escapeHTML(label)}</span></button>`;
+        const icon = action === 'create-file' ? 'addFile' : action === 'create-directory' ? 'addFolder' : action as 'import' | 'export';
+        return { create, html: `<button type="button" class="vfs-node-list__new-btn ${create ? '' : 'vfs-node-list__new-btn--icon'}" data-action="${action}" title="${escapeHTML(title)}" aria-label="${escapeHTML(title)}">${ui.icon(icon)}<span class="vfs-node-list__button-label">${escapeHTML(label)}</span></button>` };
+    });
+    if (options.variant === 'plain') return buttons.map(button => button.html).join('');
+    return [true, false].map(create => {
+        const html = buttons.filter(button => button.create === create).map(button => button.html).join('');
+        return html ? `<span class="vfs-node-list__toolbar-group vfs-node-list__toolbar-group--${create ? 'create' : 'transfer'}">${html}</span>` : '';
     }).join('');
 }
