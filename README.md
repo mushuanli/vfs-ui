@@ -3,6 +3,8 @@
 原生 DOM 资源浏览组件：树、抽屉、单/双列、搜索、排序、选择和动作执行。
 仅依赖 `@itookit/vfs-core`，不依赖 common、ui-common、LLM 包或 immer。内置 SVG、基础样式和主要控件的中英文文案，不需要 MindOS 的初始化或全局配置。
 
+0.5.4 提供实例展示配置、抽屉节点声明、展开通知和冒泡资源激活事件；宿主通过公开 CSS 变量和 `toolbarOptions.variant` 调整样式，不需要访问组件内部 DOM。
+
 ## 安装与文件浏览
 
 ```bash

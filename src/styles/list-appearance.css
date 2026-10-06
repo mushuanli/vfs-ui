@@ -1,0 +1,40 @@
+/* Public display options and component-owned row controls. */
+.vfs-scope-selector {
+    min-width: 0; max-width: 100%; box-sizing: border-box;
+    padding: 6px; height: var(--vfs-scope-height, 34px);
+    border: 1px solid var(--mm-border-color, #e5e7eb); border-radius: 6px;
+    background: var(--vfs-scope-background, transparent); color: inherit;
+    font: inherit; font-weight: var(--vfs-scope-font-weight, 400);
+}
+.vfs-scope-selector:focus-visible { outline: 2px solid var(--primary-color, #6366f1); outline-offset: 2px; }
+.vfs-scope-selector:disabled { opacity: .6; cursor: wait; }
+.vfs-node-list__new-controls--plain { display: flex; margin-top: 0; }
+.vfs-node-list__new-controls--plain .vfs-node-list__new-btn {
+    min-width: 32px; height: 32px; padding: 7px; border: 0; border-radius: 5px;
+    background: transparent; color: var(--primary-color, #6366f1);
+}
+.vfs-node-list__new-controls--plain .vfs-node-list__new-btn:hover:not(:disabled) { background: var(--vfs-active-bg, #eef2ff); }
+.vfs-ui--hide-timestamps .vfs-node-item__timestamp { display: none; }
+.vfs-ui--menus-always [data-action="item-menu"] { opacity: 1; }
+.vfs-ui--menus-hover [data-action="item-menu"] { opacity: 0; }
+.vfs-ui--menus-hover .vfs-node-item:is(:hover, :focus-within) > .vfs-node-item__main-row [data-action="item-menu"] { opacity: 1; }
+.vfs-directory-item--stacked-title > .vfs-node-item__main-row .vfs-directory-item__title-container {
+    flex-direction: column; align-items: flex-start; gap: 2px;
+}
+.vfs-directory-item__title, .vfs-directory-item__description { max-width: 100%; }
+.vfs-node-item__icon, .vfs-directory-item__icon {
+    width: var(--vfs-item-icon-size, auto); height: var(--vfs-item-icon-size, auto);
+}
+.vfs-node-item__icon > [role="img"], .vfs-directory-item__icon > [role="img"] {
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.vfs-node-item__creation { display: inline-flex; align-items: center; gap: 2px; opacity: 0; flex-shrink: 0; }
+.vfs-node-item__main-row:is(:hover, :focus-within) > .vfs-node-item__creation { opacity: 1; }
+.vfs-node-item__creation svg { width: 16px; height: 16px; }
+.vfs-node-item__creation button {
+    display: inline-flex; align-items: center; justify-content: center; padding: 4px; width: 26px; height: 26px; opacity: 1;
+}
+@media (hover: none) {
+    .vfs-node-item__creation, .vfs-ui--menus-hover [data-action="item-menu"] { opacity: 1; }
+    .vfs-node-list__new-controls--plain .vfs-node-list__new-btn { min-height: 44px; height: 44px; }
+}

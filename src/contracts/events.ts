@@ -6,6 +6,12 @@
 
 import type { VFSNodeUI, VFSUIState } from './types';
 
+/** Bubbling DOM notifications for hosts that own the surrounding layout. */
+export const VFS_DOM_EVENTS = {
+  resourceActivated: 'vfs:resource-activated',
+  directoryExpansionChanged: 'vfs:directory-expansion-changed',
+} as const;
+
 /**
  * 公共事件映射表
  * 
@@ -13,6 +19,8 @@ import type { VFSNodeUI, VFSUIState } from './types';
  * 内部通过 IEventEmitter.emit 触发
  */
 export interface PublicEventMap {
+  'resourceActivated': { item: VFSNodeUI };
+  'directoryExpansionChanged': { id: string; expanded: boolean };
   'sessionSelected': { item: VFSNodeUI | undefined };
   'fileRenamed': { oldId: string; newId: string; item: VFSNodeUI };
   'navigateToHeading': { elementId: string };

@@ -28,6 +28,7 @@ import type {
   IFileTypePort,
 } from '../contracts/ports';
 import type { PublicEventMap, PublicEventName } from '../contracts/events';
+import { VFS_DOM_EVENTS } from '../contracts/events';
 
 import type { FileTypeDefinition } from '../services/FileTypeRegistry';
 import type { EngineAdapter } from '../services/EngineAdapter';
@@ -139,6 +140,7 @@ export class VFSUIShell {
   private lastSidebarState = false;
   private lastForceTimestamp?: number;
   private navigationWasUserAction = false;
+  private lastExpandedIds = new Set<string>();
 
   constructor(
     private readonly options: VFSUIShellOptions,
@@ -168,6 +170,7 @@ export class VFSUIShell {
 
     this.lastActiveId = this.statePort.getState().activeId;
     this.lastSidebarState = this.statePort.getState().isSidebarCollapsed;
+    this.lastExpandedIds = this.statePort.getState().expandedFolderIds;
 
     // Wrap command port to intercept nav commands
     this.commandPort = this.wrapCommandPort(this.commandPort);
@@ -504,6 +507,8 @@ export class VFSUIShell {
   private initializeComponents(): void {
     const listOptions = {
       presentation: this.presentation,
+      appearance: this.options.appearance,
+      onActivate: (item: VFSNodeUI) => this.notifyActivation(item),
       container: this.options.sessionListContainer,
       store: this.statePort,
       commandBus: this.commandPort,
@@ -592,6 +597,7 @@ export class VFSUIShell {
 
   private connectStoreToPublicEvents(): void {
     this.statePort.subscribe(state => {
+      this.notifyExpansion(state.expandedFolderIds);
       const currentActive = this.getActiveSession();
       const activeChanged = state.activeId !== this.lastActiveId;
       const forceUpdate =
@@ -613,6 +619,24 @@ export class VFSUIShell {
 
       this.eventPort.emit('stateChanged', { state });
     });
+  }
+
+  private notifyActivation(item: VFSNodeUI): void {
+    const detail = { item };
+    this.eventPort.emit('resourceActivated', detail);
+    this.options.sessionListContainer.dispatchEvent(new CustomEvent(VFS_DOM_EVENTS.resourceActivated, { detail, bubbles: true }));
+  }
+
+  private notifyExpansion(expanded: Set<string>): void {
+    if (this.lastExpandedIds === expanded) return;
+    const previous = this.lastExpandedIds;
+    this.lastExpandedIds = expanded;
+    for (const id of new Set([...previous, ...expanded])) {
+      if (previous.has(id) === expanded.has(id)) continue;
+      const detail = { id, expanded: expanded.has(id) };
+      this.eventPort.emit('directoryExpansionChanged', detail);
+      this.options.sessionListContainer.dispatchEvent(new CustomEvent(VFS_DOM_EVENTS.directoryExpansionChanged, { detail, bubbles: true }));
+    }
   }
 
   private connectRenameEvents(): void {

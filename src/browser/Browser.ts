@@ -9,9 +9,11 @@ export interface BrowserOptions {
   source: BrowserSource;
   title?: string;
   presentation?: VFSPresentationOptions;
+  appearance?: import('../contracts/components').VFSListAppearance;
   sort?: VFSListSort;
   actions?: readonly BrowserAction[];
   onActivate?(node: BrowserNode): void;
+  onExpansionChange?(change: { id: string; expanded: boolean }): void;
   onError?(error: unknown): void;
 }
 function resource(node: VFSNodeUI): BrowserNode {
@@ -19,7 +21,7 @@ function resource(node: VFSNodeUI): BrowserNode {
     label: node.metadata.title, resource: node.resource, expandable: node.metadata.custom.browserExpandable, icon: node.icon,
     description: node.content?.summary, readOnly: node.metadata.custom._readOnly === true,
     tags: [...node.metadata.tags], createdAt: Date.parse(node.metadata.createdAt), modifiedAt: Date.parse(node.metadata.lastModified),
-    presentation: node.metadata.custom.browserPresentation };
+    presentation: node.presentation?.layout, titleLayout: node.presentation?.titleLayout };
 }
 /** Compact public facade; store and rendering details remain private. */
 export class VFSBrowser {
@@ -28,13 +30,13 @@ export class VFSBrowser {
   private readonly cleanups: Array<() => void> = [];
   constructor(private readonly options: BrowserOptions) {
     this.shell = new VFSUIShell({ sessionListContainer: options.container, source: options.source,
-      title: options.title, presentation: options.presentation, sort: options.sort, autoSelectFirst: false, persistence: false, onError: options.onError,
-      cardDirectory: node => node.metadata.custom.browserPresentation === 'drawer',
+      title: options.title, presentation: options.presentation, appearance: options.appearance, sort: options.sort, autoSelectFirst: false, persistence: false, onError: options.onError,
       contextMenu: { items: (_item, defaults) => defaults.filter(entry => entry.type !== 'separator'
         && options.actions?.some(action => action.id === entry.id)), bulkItems: () => this.menu('selection') },
     });
     this.cleanups.push(this.shell.on('stateChanged', () => this.toolbar()));
     this.cleanups.push(this.shell.on('sessionSelected', ({ item }) => { if (item) options.onActivate?.(resource(item)); }));
+    this.cleanups.push(this.shell.on('directoryExpansionChanged', change => options.onExpansionChange?.(change)));
     this.toolbar();
   }
   private context(target?: VFSNodeUI): ActionContext {
@@ -75,6 +77,7 @@ export class VFSBrowser {
   select(ids: readonly string[]): void { this.shell.setSelection([...ids]); }
   refresh(): Promise<void> { return this.shell.refresh(); }
   getSelection(): readonly BrowserNode[] { return this.context().selection; }
+  getSnapshot(): import('../contracts/source').BrowserSnapshot { return this.shell.getSnapshot(); }
   destroy(): void { this.abort.abort(); this.cleanups.forEach(close => close()); this.shell.destroy(); }
 }
 export const createVFSBrowser = (options: BrowserOptions): VFSBrowser => new VFSBrowser(options);

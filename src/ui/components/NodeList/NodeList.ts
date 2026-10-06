@@ -29,6 +29,8 @@ import { EngineTagSource } from '../../../mention/EngineTagSource';
 import { TagEditorComponent } from '../TagEditor/TagEditorComponent';
 
 interface NodeListOptions extends BaseComponentDeps, VFSRowActionOptions {
+  appearance?: import('../../../contracts/components').VFSListAppearance;
+  onActivate?: (node: VFSNodeUI) => void;
   listItems?: (items: VFSNodeUI[]) => VFSNodeUI[];
   listHeader?: HTMLElement;
   titleHeader?: HTMLElement;
@@ -92,9 +94,14 @@ export class NodeList extends BaseComponent<NodeListState> {
   private readonly activateDirectories: boolean;
   private readonly doubleClickActivation?: NodeListOptions['doubleClickActivation'];
   private readonly exportDirectories: boolean;
+  private readonly onActivate?: NodeListOptions['onActivate'];
 
   constructor(options: NodeListOptions) {
     super(options);
+    this.onActivate = options.onActivate;
+    this.container.classList.toggle('vfs-ui--hide-timestamps', options.appearance?.showTimestamp === false);
+    this.container.classList.toggle('vfs-ui--menus-always', options.appearance?.menuVisibility === 'always');
+    this.container.classList.toggle('vfs-ui--menus-hover', options.appearance?.menuVisibility === 'hover');
     this.actions = new ActionRunner(options.onError);
     this.rowCreation = options.rowCreation;
     this.favoriteAction = options.favoriteAction;
@@ -238,6 +245,7 @@ export class NodeList extends BaseComponent<NodeListState> {
 
   setToolbarOptions(options: VFSToolbarOptions): void {
     this.toolbarOptions = options;
+    this.newControlsEl.classList.toggle('vfs-node-list__new-controls--plain', options.variant === 'plain');
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--single-create', !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--transfer-only', !!options.hiddenActions?.includes('create-file') && !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.innerHTML = toolbarHTML(options, this.fileCreation?.label ?? this.ui.t('vfs.toolbar.file'), this.ui);
@@ -431,7 +439,7 @@ export class NodeList extends BaseComponent<NodeListState> {
     }
     const readOnly = this.effectiveReadOnly(node);
     // Selection stays a view-level concern; per-row read-only only gates mutations.
-    if (node && this.cardDirectory?.(node) && target.closest('[data-action="toggle-folder"]'))
+    if (node && (this.cardDirectory?.(node) ?? node.presentation?.layout === 'drawer') && target.closest('[data-action="toggle-folder"]'))
       this.selectionHandler.handleItemSelection(itemId, event, this.state.visibleItemIds, this.state.readOnly);
 
     const result = this.itemActionHandler.handleItemClick(
@@ -460,7 +468,7 @@ export class NodeList extends BaseComponent<NodeListState> {
 
     if (result.shouldNavigate && !(node && this.doubleClickActivation?.(node))) {
       if (itemType === 'file' || this.activateDirectories) {
-        this.commandBus.execute('nav:selectSession', { sessionId: itemId });
+        if (node) this.activate(node);
       } else if (itemType === 'directory') {
         this.commandBus.execute('nav:selectSession', { sessionId: null });
       }
@@ -473,9 +481,13 @@ export class NodeList extends BaseComponent<NodeListState> {
     if (event.ctrlKey || event.metaKey || event.shiftKey || target.closest('button, input') || (action && action !== 'select-item')) return;
     const row = target.closest<HTMLElement>('[data-item-id]');
     const node = row?.dataset.itemId ? this.findItemById(row.dataset.itemId) : null;
-    if (node && this.doubleClickActivation?.(node) && (node.type === 'file' || this.activateDirectories))
-      this.commandBus.execute('nav:selectSession', { sessionId: node.id });
+    if (node && this.doubleClickActivation?.(node) && (node.type === 'file' || this.activateDirectories)) this.activate(node);
   };
+
+  private activate(node: VFSNodeUI): void {
+    this.commandBus.execute('nav:selectSession', { sessionId: node.id });
+    this.onActivate?.(node);
+  }
 
   private handleContextMenu = (event: MouseEvent): void => {
     const target = event.target as Element;
@@ -491,8 +503,8 @@ export class NodeList extends BaseComponent<NodeListState> {
     if (target.classList.contains('vfs-directory-item__header') && ['Enter', ' '].includes(event.key)) {
       const row = target.closest<HTMLElement>('[data-item-id]');
       const node = row?.dataset.itemId ? this.findItemById(row.dataset.itemId) : null;
-      if (event.key === 'Enter' && node && this.doubleClickActivation?.(node)) {
-        event.preventDefault(); this.commandBus.execute('nav:selectSession', { sessionId: node.id }); return;
+      if (event.key === 'Enter' && node && this.doubleClickActivation?.(node) && (node.type === 'file' || this.activateDirectories)) {
+        event.preventDefault(); this.activate(node); return;
       }
       event.preventDefault(); target.click(); return;
     }
@@ -665,5 +677,6 @@ export class NodeList extends BaseComponent<NodeListState> {
     this.tagEditorPopover.destroy();
     this.contextMenuHandler.hide();
     this.renderer.destroy();
+    this.container.classList.remove('vfs-ui--hide-timestamps', 'vfs-ui--menus-always', 'vfs-ui--menus-hover');
   }
 }

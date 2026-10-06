@@ -21,7 +21,7 @@ const browser = createVFSBrowser({
 await browser.start();
 ```
 
-`VFSBrowser` 提供 `start/reveal/expand/setQuery/select/refresh/getSelection/destroy`。此入口默认单列、不自动选中、不写 localStorage，也不为自定义数据源注册文件写操作。
+`VFSBrowser` 提供 `start/reveal/expand/setQuery/select/refresh/getSelection/getSnapshot/destroy`。此入口默认单列、不自动选中、不写 localStorage，也不为自定义数据源注册文件写操作。
 
 `BrowserSource` 只有 `get(id, signal?)`、`children(parentId, signal?)`、`subscribe(listener)`。ID 是不可解析的显示身份，父链来自 parentId。BrowserNode 的 `kind` 明确区分 file/directory/group，`resource?: { viewId, path }` 是真实资源引用。分组没有默认文件动作；源范围由 fromVFS 的 root 限定，实际读写权限仍由 IFileSystem 校验。
 
@@ -118,7 +118,18 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 
 持久化使用带 version 的 UI 状态记录，兼容旧无版本记录；相同快照不重复写入。简明入口默认关闭持久化，避免实例共享默认选择状态。
 
-样式变量和基础 reset 限定在 `.vfs-ui` 范围，弹出菜单也设置该作用域，不修改宿主 body、全局按钮或列表。宿主仍可通过现有主题样式覆盖组件。
+基础 reset 限定在 `.vfs-ui` 范围，弹出菜单也设置该作用域，独立 ScopeSelector 使用自己的组件类；不修改宿主 body、全局按钮或列表。宿主通过公开展示选项和 CSS 变量定制，不能依赖内部 DOM 类名或覆盖内部组件选择器。
+
+### 展示、抽屉与导航通知（0.5.4）
+
+- `appearance.showTimestamp` 默认显示时间戳，设为 false 只改变该实例；`appearance.menuVisibility` 可选择 hover 或 always。行创建按钮的尺寸、悬停、键盘聚焦及触屏显示由本包样式负责。
+- `VFSNodeUI.presentation.layout: 'drawer'` 将目录呈现为抽屉；`titleLayout: 'stacked'` 将标题和描述上下排列。BrowserSource 对应字段为 `BrowserNode.presentation` 和 `titleLayout`。现有 `cardDirectory` 回调仍兼容，并优先于节点声明。
+- `shell.setExpanded(id, expanded)` / `browser.expand(id, expanded)` 控制展开，`shell.on('directoryExpansionChanged', callback)` / `browser.onExpansionChange` 通知实际状态变化，包含手动操作、程序调用及同级抽屉自动收起；重复设置相同状态不通知。宿主仍拥有分组成员、排序与业务动作。
+- `shell.on('resourceActivated', callback)` 只通知用户激活（单击、按配置双击、键盘），不因程序选择/恢复、复选框或折叠操作触发。原 `sessionSelected` 保持选择和恢复语义。两种事件均不执行宿主命令。
+- 宿主布局可在外围容器订阅冒泡 DOM 通知 `VFS_DOM_EVENTS.resourceActivated` 和 `directoryExpansionChanged`，其 `CustomEvent.detail` 与 shell 事件相同。移动端列表/正文切换不需要查询内部行类名。双列返回使用已有 `showColumn('navigation')`。
+- `toolbarOptions.variant: 'plain'` 提供嵌入宿主标题栏的紧凑无边框操作；ScopeSelector 自带样式、键盘焦点与等待态。
+
+公开 CSS 变量可设在宿主自己的容器上并继承：`--vfs-item-icon-size`（SVG 默认 18px）、`--vfs-toolbar-icon-size`（16px）、`--vfs-toolbar-gap`（4px）、`--vfs-toolbar-margin-top`（8px）、`--vfs-title-bar-gap`（6px）、`--vfs-secondary-action-min-height`（0）、`--vfs-secondary-action-font-size`（11px）、`--vfs-scope-height`（34px）、`--vfs-scope-font-weight`（400）、`--vfs-scope-background`（transparent）。plain 工具栏固定无顶部间距。
 
 ## 实现入口
 

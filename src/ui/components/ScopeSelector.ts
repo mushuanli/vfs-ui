@@ -13,6 +13,7 @@ export class ScopeSelector {
     private value = '';
     constructor(private readonly options: ScopeSelectorOptions) {
         this.actions = new ActionRunner(options.onError);
+        this.element.className = 'vfs-scope-selector';
         this.element.setAttribute('aria-label', options.label);
         this.element.addEventListener('change', this.change);
     }

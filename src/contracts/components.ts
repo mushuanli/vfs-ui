@@ -19,9 +19,15 @@ export interface FileCreationConfig {
     label?: string; title?: string; content?: string;
     startupFileName?: string; startupContent?: string; instant?: boolean;
 }
+/** Instance display choices; component markup and responsive styling stay private. */
+export interface VFSListAppearance {
+    showTimestamp?: boolean;
+    menuVisibility?: 'hover' | 'always';
+}
 export interface ResourceListOptions<T extends object = VFSNodeUI> {
     sessionListContainer: HTMLElement; documentOutlineContainer?: HTMLElement; initialState?: object;
     contextMenu?: ContextMenuConfig<T>; readOnly?: boolean; initialSidebarCollapsed?: boolean;
     title?: string; searchPlaceholder?: string; fileCreation?: FileCreationConfig;
+    appearance?: VFSListAppearance;
     components?: { tagEditor?: TagEditorFactory };
 }

@@ -11,20 +11,25 @@ it('selects a project on one click, activates on double-click and keeps fold con
     const ui = createVFSUI({ sessionListContainer: host, persistence: false, autoSelectFirst: false,
         activateDirectories: true, doubleClickActivation: node => node.id === '/project' }, fs) as VFSUIShell;
     const activate = vi.fn(); ui.on('sessionSelected', activate);
+    const userActivate = vi.fn(); ui.on('resourceActivated', userActivate);
     try {
         await ui.start(); activate.mockClear();
         const header = host.querySelector<HTMLElement>('[data-item-id="/project"] .vfs-directory-item__header')!;
         header.click();
         expect(ui.getSnapshot().selectedIds).toEqual(['/project']);
         expect(activate).not.toHaveBeenCalled(); expect(header.isConnected).toBe(true);
+        expect(userActivate).not.toHaveBeenCalled();
         header.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
         expect(activate).toHaveBeenCalledOnce(); expect(ui.getSnapshot().activeId).toBe('/project');
+        expect(userActivate).toHaveBeenCalledOnce();
         activate.mockClear();
         host.querySelector<HTMLElement>('[data-item-id="/project"] .vfs-directory-item__toggle')!.click();
         expect(activate).not.toHaveBeenCalled();
+        expect(userActivate).toHaveBeenCalledOnce();
         const current = host.querySelector<HTMLElement>('[data-item-id="/project"] .vfs-directory-item__header')!;
         current.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
         expect(activate).toHaveBeenCalledOnce();
+        expect(userActivate).toHaveBeenCalledTimes(2);
     } finally { ui.destroy(); host.remove(); await manager.dispose(); }
 });
 

@@ -16,6 +16,7 @@ export interface BrowserNode {
   readonly modifiedAt?: number;
   readonly readOnly?: boolean;
   readonly presentation?: 'row' | 'drawer';
+  readonly titleLayout?: 'inline' | 'stacked';
 }
 export interface SourceChange { readonly parentIds?: readonly (string | null)[] }
 /** IDs are opaque. Only the VFS adapter interprets paths. */

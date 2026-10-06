@@ -7,7 +7,7 @@ import { getExtension, findNodeById } from '../utils/helpers';
 
 export function displayNode(node: BrowserNode, icon = fileTypeIcon): VFSNodeUI {
   return { id: node.id, type: node.kind === 'file' ? 'file' : 'directory', version: '1', icon: node.icon || icon(node.resource?.path ?? node.label, node.kind !== 'file'),
-    presentation: { fileDetails: node.fileDetails },
+    presentation: { fileDetails: node.fileDetails, layout: node.presentation, titleLayout: node.titleLayout },
     resource: node.resource, kind: node.kind, parentId: node.parentId,
     metadata: { title: node.label, size: node.size, path: node.resource?.path ?? '', parentPath: node.parentId,
       tags: [...node.tags ?? []], createdAt: new Date(node.createdAt ?? 0).toISOString(), lastModified: new Date(node.modifiedAt ?? 0).toISOString(),

@@ -24,6 +24,9 @@ export interface ParseResult {
 // --- Core UI Data Model ---
 
 export interface NodePresentation {
+  /** Expandable resource group; its contents and commands belong to the host. */
+  layout?: 'row' | 'drawer';
+  titleLayout?: 'inline' | 'stacked';
   /** Opt a virtual directory into the standard two-step delete control. */
   quickDelete?: boolean;
   fileDetails?: boolean;

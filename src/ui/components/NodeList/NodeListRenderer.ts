@@ -202,7 +202,7 @@ export class NodeListRenderer {
       isConfirmingDelete: confirmDeleteId === item.id,
       favorite: this.favoriteAction?.state(item),
       isLeaf: this.leafDirectory?.(item),
-      isCard: this.cardDirectory?.(item),
+      isCard: this.cardDirectory?.(item) ?? item.presentation?.layout === 'drawer',
       isActive: item.id === state.activeId,
       isExpanded: !this.leafDirectory?.(item) && (state.expandedFolderIds.has(item.id) || !!state.searchQuery),
       dirSelectionState: this.selectionHandler.getFolderSelectionState(

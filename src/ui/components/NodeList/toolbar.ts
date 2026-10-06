@@ -31,6 +31,8 @@ export function actionMenuItems(definitions: readonly VFSActionDefinition[], con
     }));
 }
 export interface VFSToolbarOptions {
+    /** Compact borderless controls for a host-owned header. */
+    variant?: 'default' | 'plain';
     definitions?: readonly VFSActionDefinition[];
     items?: readonly { id: string; label: string; disabled?: boolean }[];
     hiddenActions?: VFSToolbarAction[];

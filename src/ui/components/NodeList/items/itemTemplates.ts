@@ -213,7 +213,7 @@ export const createDirectoryItemHTML = (
     : '';
 
   return `
-    <div class="vfs-node-item vfs-directory-item ${props.isCard ? 'vfs-directory-item--card' : ''}" data-item-id="${id}" data-item-type="directory">
+    <div class="vfs-node-item vfs-directory-item ${props.isCard ? 'vfs-directory-item--card' : ''} ${dir.presentation?.titleLayout === 'stacked' ? 'vfs-directory-item--stacked-title' : ''}" data-item-id="${id}" data-item-type="directory">
       <div class="vfs-node-item__main-row ${isSelectionMode ? 'is-selection-mode' : ''}">
         ${checkbox}
         <div class="vfs-directory-item__header ${props.isActive ? 'is-active' : ''} ${isSelected ? 'is-selected' : ''}" role="button" tabindex="0" ${props.isLeaf ? `aria-pressed="${!!props.isActive}"` : `aria-expanded="${isExpanded}"`} data-action="${props.isCard ? 'toggle-folder' : 'select-item'}">

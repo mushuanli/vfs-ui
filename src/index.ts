@@ -30,7 +30,9 @@ export { allowsRowAction } from './utils/row-policy';
 export { createPresentation } from './contracts/presentation';
 export type { VFSPresentationOptions, VFSPresentation, VFSIconName } from './contracts/presentation';
 export type { Translate } from './utils/i18n';
-export type { Suggestion, IAutocompleteSource, TagEditorInstance, ResourceListOptions } from './contracts/components';
+export type { Suggestion, IAutocompleteSource, TagEditorInstance, ResourceListOptions, VFSListAppearance } from './contracts/components';
+export { VFS_DOM_EVENTS } from './contracts/events';
+export type { PublicEventMap, PublicEventName, PublicEventPayload } from './contracts/events';
 export { EngineTagSource } from './mention/EngineTagSource';
 
 export { ScopeSelector, type ScopeOption, type ScopeSelectorOptions } from './ui/components/ScopeSelector';
