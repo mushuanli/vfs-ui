@@ -128,6 +128,7 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 - `shell.on('resourceActivated', callback)` 只通知用户激活（单击、按配置双击、键盘），不因程序选择/恢复、复选框或折叠操作触发。原 `sessionSelected` 保持选择和恢复语义。两种事件均不执行宿主命令。
 - 宿主布局可在外围容器订阅冒泡 DOM 通知 `VFS_DOM_EVENTS.resourceActivated` 和 `directoryExpansionChanged`，其 `CustomEvent.detail` 与 shell 事件相同。移动端列表/正文切换不需要查询内部行类名。双列返回使用已有 `showColumn('navigation')`。
 - `toolbarOptions.variant: 'plain'` 提供嵌入宿主标题栏的紧凑无边框操作；ScopeSelector 自带样式、键盘焦点与等待态。
+- 默认工具栏包含刷新按钮，调用 `VFSUIShell.refresh()` 重新读取列表并保留展开状态；只读目录仍可刷新，进行中禁用按钮并合并重复点击。`hiddenActions: ['refresh']` 可隐藏，`actions.refresh` 可覆盖默认执行；显式 `items` / `definitions` 仍完全决定工具栏内容。图标可通过 `presentation.icons.refresh` 替换，文案为 `vfs.toolbar.refresh`。
 
 公开 CSS 变量可设在宿主自己的容器上并继承：`--vfs-item-icon-size`（SVG 默认 18px）、`--vfs-toolbar-icon-size`（16px）、`--vfs-toolbar-gap`（4px）、`--vfs-toolbar-margin-top`（8px）、`--vfs-title-bar-gap`（6px）、`--vfs-secondary-action-min-height`（0）、`--vfs-secondary-action-font-size`（11px）、`--vfs-scope-height`（34px）、`--vfs-scope-font-weight`（400）、`--vfs-scope-background`（transparent）。plain 工具栏固定无顶部间距。
 

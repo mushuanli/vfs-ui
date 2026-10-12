@@ -509,6 +509,7 @@ export class VFSUIShell {
       presentation: this.presentation,
       appearance: this.options.appearance,
       onActivate: (item: VFSNodeUI) => this.notifyActivation(item),
+      onRefresh: () => this.refresh(),
       container: this.options.sessionListContainer,
       store: this.statePort,
       commandBus: this.commandPort,

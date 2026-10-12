@@ -1,7 +1,7 @@
 import { translate, type Translate } from '../utils/i18n';
 import { ACTION_ICONS, FILE_BROWSER_ICONS, FILE_ICONS, VFS_TOOLBAR_ICONS, fileTypeIcon } from '../utils/icons';
 
-export type VFSIconName = 'delete' | 'close' | 'favorite' | 'pin' | 'folder' | 'addFile' | 'addFolder' | 'import' | 'export';
+export type VFSIconName = 'delete' | 'close' | 'favorite' | 'pin' | 'folder' | 'addFile' | 'addFolder' | 'import' | 'export' | 'refresh';
 export interface VFSPresentationOptions {
     locale?: 'zh-CN' | 'en';
     translate?: Translate;
@@ -19,7 +19,7 @@ export interface VFSPresentation {
 const defaults: Record<VFSIconName, string> = { delete: ACTION_ICONS.delete, close: ACTION_ICONS.close,
     favorite: ACTION_ICONS.favorite, pin: FILE_ICONS.pin, folder: FILE_ICONS.folder,
     addFile: FILE_BROWSER_ICONS.addFile, addFolder: FILE_BROWSER_ICONS.addFolder,
-    import: VFS_TOOLBAR_ICONS.import, export: VFS_TOOLBAR_ICONS.export };
+    import: VFS_TOOLBAR_ICONS.import, export: VFS_TOOLBAR_ICONS.export, refresh: FILE_BROWSER_ICONS.refresh };
 export function createPresentation(options: VFSPresentationOptions = {}): VFSPresentation {
     return {
         t: options.translate ?? ((key, params) => translate(key, params, options.locale)),

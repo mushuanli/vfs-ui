@@ -31,6 +31,7 @@ import { TagEditorComponent } from '../TagEditor/TagEditorComponent';
 interface NodeListOptions extends BaseComponentDeps, VFSRowActionOptions {
   appearance?: import('../../../contracts/components').VFSListAppearance;
   onActivate?: (node: VFSNodeUI) => void;
+  onRefresh?: () => Promise<void>;
   listItems?: (items: VFSNodeUI[]) => VFSNodeUI[];
   listHeader?: HTMLElement;
   titleHeader?: HTMLElement;
@@ -95,10 +96,12 @@ export class NodeList extends BaseComponent<NodeListState> {
   private readonly doubleClickActivation?: NodeListOptions['doubleClickActivation'];
   private readonly exportDirectories: boolean;
   private readonly onActivate?: NodeListOptions['onActivate'];
+  private readonly onRefresh?: NodeListOptions['onRefresh'];
 
   constructor(options: NodeListOptions) {
     super(options);
     this.onActivate = options.onActivate;
+    this.onRefresh = options.onRefresh;
     this.container.classList.toggle('vfs-ui--hide-timestamps', options.appearance?.showTimestamp === false);
     this.container.classList.toggle('vfs-ui--menus-always', options.appearance?.menuVisibility === 'always');
     this.container.classList.toggle('vfs-ui--menus-hover', options.appearance?.menuVisibility === 'hover');
@@ -319,6 +322,11 @@ export class NodeList extends BaseComponent<NodeListState> {
         button.disabled = this.actions.isPending(action) || (definition.disabled?.(context) ?? false);
         continue;
       }
+      if (action === 'refresh') {
+        button.disabled = this.actions.isPending(action) || !(this.onRefresh || this.toolbarOptions.actions?.refresh)
+          || this.toolbarOptions.items?.some(item => item.id === action && item.disabled) === true;
+        continue;
+      }
       if (!CREATION_ACTIONS.has(action)) continue;
       button.disabled = readOnly || this.toolbarOptions.items?.some(item => item.id === action && item.disabled) === true;
     }
@@ -372,7 +380,12 @@ export class NodeList extends BaseComponent<NodeListState> {
       return;
     }
 
-    if (action === 'import') {
+    if (action === 'refresh' && this.onRefresh) {
+      const button = actionEl as HTMLButtonElement; button.disabled = true; button.setAttribute('aria-busy', 'true');
+      void this.actions.run(action, () => this.onRefresh!()).catch(() => {}).finally(() => {
+        button.removeAttribute('aria-busy'); this.syncCreationControls();
+      });
+    } else if (action === 'import') {
       this.commandBus.execute('file:import', { parentPath });
     } else if (action === 'export') {
       const selectedFileIds = selectedIds.filter(id => {
