@@ -51,7 +51,7 @@ export function toolbarHTML(options: VFSToolbarOptions, fileLabel: string, ui: V
     const labels: Record<string, string> = { 'create-file': options.fileLabel ?? fileLabel, 'create-directory': options.directoryLabel ?? ui.t('vfs.toolbar.directory'),
         import: ui.t('vfs.toolbar.import'), export: ui.t('vfs.toolbar.export'), refresh: ui.t('vfs.toolbar.refresh') };
     const order: VFSToolbarAction[] = options.directoryFirst
-        ? ['create-directory', 'create-file', 'import', 'export', 'refresh'] : ['create-file', 'create-directory', 'import', 'export', 'refresh'];
+        ? ['create-directory', 'create-file', 'refresh', 'import', 'export'] : ['create-file', 'create-directory', 'refresh', 'import', 'export'];
     const buttons = order.filter(action => !options.hiddenActions?.includes(action)).map(action => {
         const create = action.startsWith('create-'), label = labels[action];
         const title = create ? ui.t('vfs.toolbar.create', { name: label }) : label;
