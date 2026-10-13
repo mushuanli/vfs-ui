@@ -86,6 +86,8 @@ export interface VFSUIShellOptions extends BrowserBaseOptions, VFSRowActionOptio
   doubleClickActivation?: (node: VFSNodeUI) => boolean;
   /** Restore saved selection, but optionally keep a new tree unselected. */
   autoSelectFirst?: boolean;
+  /** Render root entries before restoring the saved expanded branch. */
+  deferExpansion?: boolean;
   restoreExpandedDirectory?: (path: string) => boolean;
   primaryAction?: { label: string; run(): Promise<void> };
   /** Include directories in the export button selection (default false). */
@@ -141,6 +143,8 @@ export class VFSUIShell {
   private lastForceTimestamp?: number;
   private navigationWasUserAction = false;
   private lastExpandedIds = new Set<string>();
+  private expansionTimer?: ReturnType<typeof setTimeout>;
+  private destroyed = false;
 
   constructor(
     private readonly options: VFSUIShellOptions,
@@ -225,14 +229,30 @@ export class VFSUIShell {
     // 1. Load root-level data from engine
     await this.presentation.trace('vfsUi.loadData', () => this.engineAdapter.loadData());
 
+    if (this.destroyed) return undefined;
     this.engineAdapter.connectEngineEvents();
-    await this.presentation.trace('vfsUi.restoreExpansion', () => this.engineAdapter.restoreExpansion(this.statePort.getState().expandedFolderIds));
+    if (!this.options.deferExpansion) await this.restoreExpansion();
 
     // 4. Create default file if the tree is empty
     await this.ensureDefaultFile();
+    if (this.destroyed) return undefined;
+    if (this.options.deferExpansion) this.deferExpansion();
 
     // 5. Restore the previously active session, or pick the first file
     return this.restoreActiveSession();
+  }
+
+  private restoreExpansion(): Promise<void> {
+    return this.presentation.trace('vfsUi.restoreExpansion', () =>
+      this.engineAdapter.restoreExpansion(this.statePort.getState().expandedFolderIds));
+  }
+
+  private deferExpansion(): void {
+    if (this.expansionTimer !== undefined) clearTimeout(this.expansionTimer);
+    this.expansionTimer = setTimeout(() => {
+      this.expansionTimer = undefined;
+      if (!this.destroyed) void this.restoreExpansion().catch(error => this.options.onError?.(error));
+    }, 0);
   }
 
   // ── Private helpers ──────────────────────────────────────────────────
@@ -448,6 +468,9 @@ export class VFSUIShell {
   }
 
   destroy(): void {
+    this.destroyed = true;
+    if (this.expansionTimer !== undefined) clearTimeout(this.expansionTimer);
+    this.expansionTimer = undefined;
     this.cancelPendingSelection();
     this.navigationList?.destroy();
     this.nodeList.destroy();

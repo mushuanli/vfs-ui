@@ -11,6 +11,8 @@ import { mapFSNodeToUIItem, mapFSNodesToUIItems } from './NodeMapper';
 import { findNodeById, shouldFilterNode, traverseNodes } from '../utils/helpers';
 import { adapterDEBUG } from '../utils/adapter-debug';
 
+type ExpansionOptions = { restoreDescendants?: boolean; expand?: boolean; restoreOnly?: boolean };
+
 export class EngineAdapter {
     private queues = {
         update: new Set<string>(),
@@ -142,7 +144,7 @@ export class EngineAdapter {
             const isRoot = pid === null || pid === '/';
             if (!isRoot || node.children !== undefined) continue;
 
-            await this.expandDirectory(folderId);
+            await this.expandDirectory(folderId, { restoreOnly: true });
             break; // accordion: at most one root branch
         }
     }
@@ -331,14 +333,28 @@ export class EngineAdapter {
         return map;
     }
 
-    async expandDirectory(folderId: string, options: { restoreDescendants?: boolean; expand?: boolean } = {}): Promise<void> {
+    private isExpandedBranch(folderId: string): boolean {
+        const { items, expandedFolderIds } = this.store.getState();
+        let id: string | null = folderId;
+        while (id && id !== '/') {
+            if (!expandedFolderIds.has(id)) return false;
+            const node: VFSNodeUI | undefined = findNodeById(items, id);
+            if (!node) return false;
+            id = node.metadata.parentPath;
+        }
+        return true;
+    }
+
+    async expandDirectory(folderId: string, options: ExpansionOptions = {}): Promise<void> {
         if (!this.visible || this.loadingFolderIds.has(folderId) || findNodeById(this.store.getState().items, folderId)?.metadata.custom._disabled === true) return;
+        if (options.restoreOnly && !this.isExpandedBranch(folderId)) return;
         const revision = this.visibilityRevision;
         this.loadingFolderIds.add(folderId);
 
         try {
             const children = await this.displayedChildren(folderId);
             if (!this.current(revision)) return;
+            if (options.restoreOnly && !this.isExpandedBranch(folderId)) return;
             const uiChildren = children.map(n =>
                 mapFSNodeToUIItem(n, this.iconResolver, undefined, this.showFileExtensions)
             );
@@ -347,26 +363,20 @@ export class EngineAdapter {
                 type: 'FOLDER_CHILDREN_LOADED',
                 payload: { parentPath: folderId, children: uiChildren, expand: options.expand },
             });
-            if (options.restoreDescendants === false) return;
-
-            // Recursively expand persisted subdirectories so the full tree is
-            // restored before the shell re-emits sessionSelected.
-            const { expandedFolderIds } = this.store.getState();
-            for (const child of uiChildren) {
-                if (
-                    child.type === 'directory' &&
-                    expandedFolderIds.has(child.id) &&
-                    child.children === undefined
-                ) {
-                    await this.expandDirectory(child.id);
-                    break; // accordion: at most one child branch per level
-                }
-            }
+            await this.restoreDescendants(uiChildren, options);
         } catch (err) {
             console.error('[EngineAdapter] expandDirectory failed:', folderId, err);
         } finally {
             this.loadingFolderIds.delete(folderId);
         }
+    }
+
+    private async restoreDescendants(children: VFSNodeUI[], options: ExpansionOptions): Promise<void> {
+        if (options.restoreDescendants === false) return;
+        const { expandedFolderIds } = this.store.getState();
+        const child = children.find(node => node.type === 'directory' && expandedFolderIds.has(node.id) && node.children === undefined);
+        // An accordion restores at most one child branch per level.
+        if (child) await this.expandDirectory(child.id, options);
     }
 
     destroy(): void {

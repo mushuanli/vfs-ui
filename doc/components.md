@@ -176,3 +176,8 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 `VFSActionContext.origin` distinguishes toolbar and menu entry points. Toolbar context uses selection, then the active row; menu context targets exactly its resource (`selectedIds: [target.id]`) and uses a directory itself or a file's parent as `parentPath`. Placement and disabled state are checked again before execution. The list shares its ActionRunner across both entry points, awaits the returned promise, prevents concurrent calls of the same action ID and reports a failure once through `onError`. Host predicates and application commands remain responsible for domain authorization.
 
 `ScopeSelector` provides an accessible select element. Hosts call `update(options, currentId)` and implement asynchronous `select(id, signal)`. Pending selection disables the control; settlement restores the latest host-supplied value, so failed choices do not replace the current scope. `destroy()` aborts its signal and detaches its listener. Project names, creation entries and scope projection belong to the host. Drawer-style directory presentation remains available through `cardDirectory` / BrowserSource presentation; it does not impose project semantics.
+
+
+### Deferred expansion
+
+`VFSUIShellOptions.deferExpansion: true` makes `start()` return after root data and selection are ready, then restores the saved expanded branch in a later task. Closing the shell cancels the scheduled task. A folder folded during restoration stays folded and its descendants are not read. The default keeps synchronous restoration. This mechanism uses the injected source and does not depend on an application runtime or transport.
