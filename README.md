@@ -84,7 +84,7 @@ const browser = createVFSBrowser({
 
 `persistence` 默认关闭；`true` 选用包内 localStorage 存储，或传入 `UIPersistencePort` 使用自己的存储。编辑器通过 `sessionSelected` 和 `navigateToHeading` 等事件由宿主连接，不需要捆绑 mdxeditor。
 
-原先从 common/ui-common 导入的 Heading、TaskCounts、菜单和标签工厂类型，现可直接从 vfs-ui 导入。原有结构兼容实现继续可用。需要跟随宿主的语言、图标或启动统计时，通过 `presentation` 注入；MindOS 的示例在 `packages/app-shell/src/browser/vfs-presentation.ts`。
+原先从 common/ui-common 导入的 Heading、TaskCounts、菜单和标签工厂类型，现可直接从 vfs-ui 导入。原有结构兼容实现继续可用。需要跟随宿主的语言、图标或启动统计时，通过 `presentation` 注入；MindOS 的示例在 `ui/app-shell/src/browser/vfs-presentation.ts`。
 
 - [接口与组件](./doc/components.md)
 - [边界与迁移记录](https://github.com/mushuanli/itookit/blob/main/doc/design/vfs-ui-boundary-review.md)
