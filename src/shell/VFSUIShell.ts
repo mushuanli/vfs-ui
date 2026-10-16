@@ -350,6 +350,10 @@ export class VFSUIShell {
   }
   private async selectPathNow(path: string, revision: number): Promise<void> {
     if (!this.visible || revision !== this.selectionRevision) return;
+    if (path === '/' && !this.getNode(path)) {
+      await this.commandPort.execute('nav:selectSession', { sessionId: null });
+      this.setSelection([]); return;
+    }
     if (this.engineAdapter instanceof SourceAdapter) {
       await this.engineAdapter.reveal(path);
       if (revision === this.selectionRevision) await this.commandPort.execute('nav:selectSession', { sessionId: path }); return;

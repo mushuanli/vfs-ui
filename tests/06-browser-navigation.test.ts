@@ -31,6 +31,9 @@ it('activates directory titles, expands arrows independently, and preserves nest
         await vi.waitFor(() => expect(selected).toHaveBeenCalledWith(expect.objectContaining({ item: expect.objectContaining({ id: '/s/tasks' }) })));
         await shell.refresh();
         expect(shell.getActiveSession()?.id).toBe('/s/tasks');
+        await shell.selectPath('/');
+        expect(shell.getSnapshot().activeId).toBeNull();
+        expect(shell.getSnapshot().selectedIds).toEqual([]);
     } finally { shell.destroy(); await manager.dispose(); }
 });
 

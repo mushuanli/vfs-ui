@@ -381,7 +381,8 @@ export class VFSStore implements IStatePort {
       draft.items.unshift(newItem);
     }
 
-    if (!preserveCreation && newItem.type === 'file') {
+    // A delayed notification for an already loaded row must not steal navigation.
+    if (!preserveCreation && newItem.type === 'file' && (!existing || draft.creatingItem)) {
       draft.activeId = newItem.id;
       draft.selectedItemIds = new Set([newItem.id]);
     }
