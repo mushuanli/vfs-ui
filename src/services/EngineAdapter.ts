@@ -11,7 +11,7 @@ import { mapFSNodeToUIItem, mapFSNodesToUIItems } from './NodeMapper';
 import { findNodeById, shouldFilterNode, traverseNodes } from '../utils/helpers';
 import { adapterDEBUG } from '../utils/adapter-debug';
 
-type ExpansionOptions = { restoreDescendants?: boolean; expand?: boolean; restoreOnly?: boolean };
+type ExpansionOptions = { restoreDescendants?: boolean; expand?: boolean; restoreOnly?: boolean; throwOnError?: boolean };
 
 export class EngineAdapter {
     private queues = {
@@ -365,6 +365,7 @@ export class EngineAdapter {
             });
             await this.restoreDescendants(uiChildren, options);
         } catch (err) {
+            if (options.throwOnError) throw err;
             console.error('[EngineAdapter] expandDirectory failed:', folderId, err);
         } finally {
             this.loadingFolderIds.delete(folderId);

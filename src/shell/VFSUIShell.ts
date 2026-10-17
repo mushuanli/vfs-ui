@@ -389,6 +389,11 @@ export class VFSUIShell {
 
   /** Expand a canonical directory while retaining the selected editor and content root. */
   expandPath(path: string): Promise<void> { return this.serializeNavigation(() => this.expandPathNow(path)); }
+  /** Load children for a host projection without expanding the row or collapsing its siblings. */
+  loadDirectory(path: string): Promise<void> {
+    const options = {expand: false, restoreDescendants: false, throwOnError: true};
+    return this.serializeNavigation(() => this.engineAdapter.expandDirectory(path, options));
+  }
   private async expandPathNow(path: string): Promise<void> {
     if (this.engineAdapter instanceof SourceAdapter) {
       await this.engineAdapter.reveal(path); await this.engineAdapter.expandDirectory(path); return;

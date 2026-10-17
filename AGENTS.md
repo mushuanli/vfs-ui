@@ -50,3 +50,5 @@ src/
 - `FileSystemView` 把 provider 消息统一成 `Source operation failed: <method>`，原文只在 `cause` 里。面向用户的报错路径（`CommandBus` 日志、`ActionRunner` 默认 reporter、宿主 report）统一用 `utils/error-detail.ts` 的 `describeErrorReason()`（日志可用 `describeCauseChain()`） 取最内层原因，否则「跨项目移动」这类可操作解释永远不会显示。
 
 - `listItems` 投影可以生成不属于文件树的行身份；原始文件树刷新不能据此删除投影行的选择和展开状态。无投影时仍对失效路径进行清理。
+
+- VFSUIShell.loadDirectory 只为已存在节点加载 children，保留节点折叠及兄弟目录展开状态，供宿主将隐藏容器成员投影到导航；加载失败向调用方拒绝且允许重试，不包含项目或会话语义。

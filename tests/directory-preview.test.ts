@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { createVFS, MemoryBackend } from '@itookit/vfs-core';
 import { createVFSUI, type VFSUIShell } from '../src';
 
-afterEach(() => { document.body.replaceChildren(); vi.unstubAllGlobals(); });
+afterEach(() => { document.body.replaceChildren(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 it('limits only presentation, keeps actions after toggling, reveals selection and searches hidden children', async () => {
     const { manager } = await createVFS({ rootBackend: new MemoryBackend() }), fs = await manager.openFileSystem('/');
@@ -36,4 +36,39 @@ it('limits only presentation, keeps actions after toggling, reveals selection an
         await vi.waitFor(() => expect(host.querySelector('[data-item-id="/one/item-6.txt"]')).not.toBeNull());
         expect(host.querySelector('[data-preview-id]')).toBeNull();
     } finally { ui.destroy(); await manager.dispose(); }
+});
+
+it('loads a projected child group without expanding it or collapsing another directory', async () => {
+    const {manager} = await createVFS({rootBackend: new MemoryBackend()}), fs = await manager.openFileSystem('/');
+    for (const name of ['files', 'group']) {
+        await fs.driver.createDirectory({parentPath: '/', name});
+        await fs.driver.createFile({parentPath: '/' + name, name: 'entry.txt', content: ''});
+    }
+    const host = document.createElement('div'); document.body.append(host);
+    const ui = createVFSUI({sessionListContainer: host, persistence: false, autoSelectFirst: false}, fs) as VFSUIShell;
+    try {
+        await ui.start(); await ui.expandPath('/files'); await ui.loadDirectory('/group');
+        expect(ui.getNode('/group')?.children?.map(item => item.id)).toEqual(['/group/entry.txt']);
+        expect(ui.getSnapshot().expandedIds).toContain('/files'); expect(ui.getSnapshot().expandedIds).not.toContain('/group');
+        expect(host.querySelector('[data-item-id="/files/entry.txt"]')).not.toBeNull();
+    } finally {ui.destroy(); await manager.dispose();}
+});
+
+it('propagates a directory load failure and allows retry without changing expanded branches', async () => {
+    const {manager} = await createVFS({rootBackend: new MemoryBackend()}), fs = await manager.openFileSystem('/');
+    for (const name of ['files', 'group']) {
+        await fs.driver.createDirectory({parentPath: '/', name});
+        await fs.driver.createFile({parentPath: '/' + name, name: 'entry.txt', content: ''});
+    }
+    const host = document.createElement('div'); document.body.append(host);
+    const ui = createVFSUI({sessionListContainer: host, persistence: false, autoSelectFirst: false}, fs) as VFSUIShell;
+    try {
+        await ui.start(); await ui.expandPath('/files');
+        vi.spyOn(fs.driver, 'getChildren').mockRejectedValueOnce(new Error('Directory unavailable'));
+        await expect(ui.loadDirectory('/group')).rejects.toThrow('Directory unavailable');
+        expect(ui.getNode('/group')?.children).toBeUndefined();
+        await ui.loadDirectory('/group');
+        expect(ui.getNode('/group')?.children?.map(item => item.id)).toEqual(['/group/entry.txt']);
+        expect(ui.getSnapshot().expandedIds).toContain('/files'); expect(ui.getSnapshot().expandedIds).not.toContain('/group');
+    } finally {ui.destroy(); await manager.dispose();}
 });
