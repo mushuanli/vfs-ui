@@ -52,3 +52,5 @@ src/
 - `listItems` 投影可以生成不属于文件树的行身份；原始文件树刷新不能据此删除投影行的选择和展开状态。无投影时仍对失效路径进行清理。
 
 - VFSUIShell.loadDirectory 只为已存在节点加载 children，保留节点折叠及兄弟目录展开状态，供宿主将隐藏容器成员投影到导航；加载失败向调用方拒绝且允许重试，不包含项目或会话语义。
+
+- `showItemMenu` 的 VFS 目标从授权 driver 按路径解析，不能依赖侧栏可见性或展开状态；执行前重新读取节点及权限。`contextMenu.mapItem` 仅注入宿主的单项展示映射，库不识别项目/Session 路径。菜单项 `iconOnly` 保留 title/aria-label，缺少图标时显示名称。

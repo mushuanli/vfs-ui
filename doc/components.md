@@ -155,7 +155,7 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 
 ## 宿主目录详情菜单
 
-`VFSUIShell.showItemMenu(event, path)` 允许宿主在宽目录详情行上打开原有节点菜单。节点尚未加载时先展开父目录，再交给 NodeList；节点查找可回退到原始浏览状态，因此导航投影隐藏文件不会丢失文件行操作。权限判定与执行仍经过原有 row-policy、ContextMenuHandler 与命令管线。
+`VFSUIShell.showItemMenu(event, path)` 允许宿主在宽目录详情行上打开原有节点菜单。VFS 来源只按目标路径读取节点，不要求侧栏可见，不展开父目录或加载兄弟条目；执行前再次读取节点，删除或权限变化会阻止过期动作。`contextMenu.mapItem` 将单个资源转换为与列表一致的展示类型，业务映射仍由宿主提供。权限判定与执行仍经过原有 row-policy、ContextMenuHandler 与命令管线。
 
 `doubleClickActivation(node)` 可指定仅双击打开的条目：单击仍更新选择，折叠箭头、勾选框和菜单独立处理；目录标题按 Enter 也可打开。未配置时保持原有单击行为。项目工作台对项目目录开启此策略。目录改名只调用 `driver.rename`，目录标题由名称派生；文件仍保留标题元数据同步与失败回滚。
 
@@ -183,3 +183,5 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 ### Deferred expansion
 
 `VFSUIShellOptions.deferExpansion: true` makes `start()` return after root data and selection are ready, then restores the saved expanded branch in a later task. Closing the shell cancels the scheduled task. A folder folded during restoration stays folded and its descendants are not read. The default keeps synchronous restoration. This mechanism uses the injected source and does not depend on an application runtime or transport.
+
+菜单项可设置 `iconOnly: true`，同时提供 `iconHTML`；名称保留在 title/aria-label，无图标时回退文字。全图标菜单自动采用 44px 点击区域的紧凑网格，图标保持 18px。

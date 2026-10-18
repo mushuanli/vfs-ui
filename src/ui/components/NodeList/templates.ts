@@ -20,11 +20,12 @@ export const createItemInputHTML = (creating: {
 
 export const createContextMenuHTML = (items: MenuItem[]): string => {
   if (!items?.length) return '';
-  return `<div class="vfs-context-menu"><ul>${items
+  const compact = items.every(item => item.type === 'separator' || item.iconOnly && item.iconHTML);
+  return `<div class="vfs-context-menu${compact ? ' vfs-context-menu--icons' : ''}"><ul>${items
     .map(item =>
       item.type === 'separator'
         ? '<li class="vfs-context-menu__separator"></li>'
-        : `<li><button data-action="${escapeHTML(item.id)}" ${item.disabled ? 'disabled' : ''}>${item.iconHTML || ''}<span>${escapeHTML(item.label)}</span></button></li>`
+        : `<li><button type="button" data-action="${escapeHTML(item.id)}" aria-label="${escapeHTML(item.label)}" title="${escapeHTML(item.label)}" ${item.disabled ? 'disabled' : ''}>${item.iconHTML || ''}${item.iconOnly && item.iconHTML ? '' : `<span>${escapeHTML(item.label)}</span>`}</button></li>`
     )
     .join('')}</ul></div>`;
 };

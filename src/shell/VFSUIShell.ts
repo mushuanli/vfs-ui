@@ -1,3 +1,4 @@
+import { mapFSNodeToUIItem } from '../services/NodeMapper';
 import { createPresentation, type VFSPresentationOptions, type VFSPresentation } from '../contracts/presentation';
 import type { DirectoryAction } from '../contracts/options';
 import { SourceAdapter } from '../browser/SourceAdapter';
@@ -322,8 +323,17 @@ export class VFSUIShell {
   /** Open the same action menu for a row rendered by the host's details view. */
   async showItemMenu(event: MouseEvent, path: string): Promise<void> {
     event.preventDefault();
-    if (!this.getNode(path)) await this.expandPath(path.slice(0, path.lastIndexOf('/')) || '/');
-    if (this.getNode(path)) this.nodeList.showItemMenu(event, path);
+    if (!this.engine && !this.getNode(path)) await this.expandPath(path.slice(0, path.lastIndexOf('/')) || '/');
+    const node = await this.readMenuItem(path);
+    if (!this.destroyed && node) this.nodeList.showItemMenu(event, path, node);
+  }
+
+  private async readMenuItem(path: string): Promise<VFSNodeUI | null> {
+    if (!this.engine) return this.getNode(path) ?? null;
+    const node = await this.engine.driver.getNode(path);
+    if (!node) return null;
+    const item = mapFSNodeToUIItem(node, (name, directory) => this.fileTypePort.getIcon(name, directory), undefined, this.options.showFileExtensions);
+    return this.options.contextMenu?.mapItem?.(item) ?? item;
   }
 
   refreshList(): void { this.nodeList.refreshView(); }
@@ -551,6 +561,7 @@ export class VFSUIShell {
       store: this.statePort,
       commandBus: this.commandPort,
       contextMenu: this.options.contextMenu,
+      readMenuItem: this.engine ? (id: string) => this.readMenuItem(id) : undefined,
       tagEditorFactory: this.options.components?.tagEditor,
       searchPlaceholder:
         this.options.searchPlaceholder || 'Search (tag:xx type:file|dir)...',

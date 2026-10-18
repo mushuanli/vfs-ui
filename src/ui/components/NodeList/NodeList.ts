@@ -33,6 +33,7 @@ interface NodeListOptions extends BaseComponentDeps, VFSRowActionOptions {
   onActivate?: (node: VFSNodeUI) => void;
   onRefresh?: () => Promise<void>;
   listItems?: (items: VFSNodeUI[]) => VFSNodeUI[];
+  readMenuItem?: (id: string) => Promise<VFSNodeUI | null>;
   listHeader?: HTMLElement;
   titleHeader?: HTMLElement;
   toolbarContainer?: HTMLElement;
@@ -86,6 +87,7 @@ export class NodeList extends BaseComponent<NodeListState> {
 
   private readonly favoriteAction?: FavoriteAction;
   private readonly listItems?: NodeListOptions['listItems'];
+  private readonly readMenuItem?: NodeListOptions['readMenuItem'];
   private readonly rootPath?: () => string | null;
   private readonly toolbar: NodeListOptions['toolbar'];
   private toolbarOptions: VFSToolbarOptions;
@@ -108,7 +110,7 @@ export class NodeList extends BaseComponent<NodeListState> {
     this.actions = new ActionRunner(options.onError);
     this.rowCreation = options.rowCreation;
     this.favoriteAction = options.favoriteAction;
-    this.listItems = options.listItems;
+    this.listItems = options.listItems; this.readMenuItem = options.readMenuItem;
     this.fileCreation = options.fileCreation; this.toolbarOptions = options.toolbarOptions ?? {}; this.cardDirectory = options.cardDirectory;
     this.rootPath = options.rootPath; this.toolbar = options.toolbar;
     this.activateDirectories = options.activateDirectories ?? false;
@@ -187,6 +189,7 @@ export class NodeList extends BaseComponent<NodeListState> {
       {
         showTagEditor: opts => this.tagEditorPopover.show(opts),
         findItemById: id => this.findItemById(id),
+        readItem: options.readMenuItem,
         canTransfer: options.transferPolicy?.source,
         additionalItems: item => actionMenuItems(this.toolbarOptions.definitions ?? [], this.actionContext(item),
           (id, target) => this.executeDefinedAction(id, target)),
@@ -347,7 +350,7 @@ export class NodeList extends BaseComponent<NodeListState> {
   }
 
   private async executeDefinedAction(id: string, item?: VFSNodeUI, signal = this.actions.signal): Promise<void> {
-    const target = item ? this.findItemById(item.id) : undefined;
+    const target = item ? this.readMenuItem ? await this.readMenuItem(item.id) : this.findItemById(item.id) : undefined;
     if (item && !target) return;
     const context = this.actionContext(target ?? undefined);
     const action = this.toolbarOptions.definitions?.find(entry => entry.id === id);
@@ -574,9 +577,9 @@ export class NodeList extends BaseComponent<NodeListState> {
   };
 
   /** Hosts reuse row policy and menu dispatch from a directory details view. */
-  showItemMenu(event: MouseEvent, itemId: string): void {
+  showItemMenu(event: MouseEvent, itemId: string, item?: VFSNodeUI): void {
     const row = document.createElement('div'); row.dataset.itemId = itemId;
-    this.contextMenuHandler.show(event, row, true);
+    this.contextMenuHandler.show(event, row, true, item);
   }
   allowsBulkAction(action: 'delete' | 'move' | 'export' | 'copy'): boolean { return this.contextMenuHandler.allows(`bulk-${action}`); }
   runBulkAction(action: 'delete' | 'move' | 'export' | 'copy'): Promise<void> { return this.contextMenuHandler.run(`bulk-${action}`); }

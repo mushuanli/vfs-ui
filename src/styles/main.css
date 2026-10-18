@@ -1562,3 +1562,9 @@
 @media (hover: none) {
   .vfs-node-item__favorite-btn { opacity: 1; }
 }
+
+/* Icon menus keep visual size independent from the touch target. */
+.vfs-context-menu--icons { min-width: 0; max-width: calc(100vw - 16px); padding: 4px; }
+.vfs-context-menu--icons ul { display: grid; grid-template-columns: repeat(4, 44px); list-style: none; margin: 0; padding: 0; }
+.vfs-context-menu--icons button { justify-content: center; width: 44px; height: 44px; padding: 10px; font-size: 18px; line-height: 1; }
+.vfs-context-menu--icons .vfs-context-menu__separator { grid-column: 1 / -1; }

@@ -39,3 +39,13 @@ it('accepts a user data source and presentation without host packages or a files
     expect(root.querySelector('[data-user-file]')).not.toBeNull();
     expect(root.querySelector('[data-action="item-menu"]')!.getAttribute('aria-label')).toBe('host:vfs.columns.more');
 });
+
+it('renders icon-only menu actions with accessible labels and falls back to text when no icon exists', async () => {
+    const {createContextMenuHTML} = await import('../src/ui/components/NodeList/templates');
+    const host = document.createElement('div'); host.innerHTML = createContextMenuHTML([{id: 'create', label: 'Create "file"', iconHTML: '<svg></svg>', iconOnly: true}]);
+    const button = host.querySelector('button')!;
+    expect(button.textContent).toBe(''); expect(button.getAttribute('aria-label')).toBe('Create "file"'); expect(button.title).toBe('Create "file"'); expect(button.querySelector('svg')).not.toBeNull();
+    expect(host.querySelector('.vfs-context-menu--icons')).not.toBeNull();
+    host.innerHTML = createContextMenuHTML([{id: 'fallback', label: 'Fallback', iconOnly: true}]);
+    expect(host.querySelector('button')?.textContent).toBe('Fallback');
+});

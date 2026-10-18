@@ -16,7 +16,7 @@ async function fixture(definitions: VFSActionDefinition[], onError = vi.fn()) {
     const ui = createVFSUI({ sessionListContainer: container, persistence: false, autoSelectFirst: false,
         toolbarOptions: { definitions }, onError }, fs);
     await ui.start();
-    return { ui, container, async destroy() { ui.destroy(); await manager.dispose(); } };
+    return { ui, fs, container, async destroy() { ui.destroy(); await manager.dispose(); } };
 }
 
 it('shares icons and one async execution across toolbar and menu while preserving each target', async () => {
@@ -73,4 +73,20 @@ it('keeps scope selection pending, restores failed choices and accepts host upda
     scope.element.value = 'project'; scope.element.dispatchEvent(new Event('change'));
     await vi.waitFor(() => expect(scope.element.disabled).toBe(false)); expect(scope.element.value).toBe('project');
     scope.destroy(); scope.element.dispatchEvent(new Event('change')); expect(select).toHaveBeenCalledTimes(2);
+});
+
+it('opens and executes a menu for an unloaded resource while navigation is hidden without loading its directory', async () => {
+    const run = vi.fn();
+    const f = await fixture([{id: 'inspect', label: 'Inspect', placement: 'menu', run}]);
+    try {
+        f.ui.setVisible(false);
+        await f.fs.driver.createFile({parentPath: '/target', name: 'unloaded.md', content: ''});
+        expect(f.ui.getNode('/target/unloaded.md')).toBeUndefined();
+        const children = vi.spyOn(f.fs.driver, 'getChildren');
+        await f.ui.showItemMenu(new MouseEvent('contextmenu'), '/target/unloaded.md');
+        document.querySelector<HTMLButtonElement>('.vfs-context-menu [data-action="inspect"]')!.click();
+        await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
+        expect(run.mock.calls[0][0]).toMatchObject({origin: 'menu', selectedIds: ['/target/unloaded.md']});
+        expect(children).not.toHaveBeenCalled(); expect(f.ui.getNode('/target/unloaded.md')).toBeUndefined();
+    } finally {await f.destroy();}
 });

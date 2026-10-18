@@ -46,3 +46,16 @@ it('delegates explicitly supplied lifecycle actions for read-only projections to
     expect(remove).toHaveBeenCalledWith(node);
     expect(commands).not.toHaveBeenCalled(); runner.destroy();
 });
+
+it('rechecks an unloaded resource and declines a deleted or newly read-only target', async () => {
+    const node = makeVFSNodeUI(), calls = vi.fn(); let current: typeof node | null = node;
+    const runner = new ActionRunner(vi.fn());
+    const menu = new ContextMenuHandler(new VFSStore(), {execute: calls}, {items: () => [{id: 'delete', label: 'Delete'}]},
+        {findItemById: () => null, readItem: async () => current, showTagEditor: vi.fn()}, 'File', true, runner);
+    try {
+        const queued = menu.run('delete', node);
+        current = {...node, metadata: {...node.metadata, custom: {_readOnly: true}}}; await queued;
+        expect(calls).not.toHaveBeenCalled();
+        current = null; await menu.run('delete', node); expect(calls).not.toHaveBeenCalled();
+    } finally {runner.destroy();}
+});

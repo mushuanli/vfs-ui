@@ -29,6 +29,7 @@ export interface ContextMenuCallbacks {
     position: { x: number; y: number };
   }) => void;
   findItemById: (id: string) => VFSNodeUI | null;
+  readItem?: (id: string) => Promise<VFSNodeUI | null>;
 }
 
 export class ContextMenuHandler {
@@ -47,7 +48,7 @@ export class ContextMenuHandler {
     private readonly ui: VFSPresentation = defaultPresentation,
   ) {}
 
-  show(event: MouseEvent, itemEl: HTMLElement, singleTarget = false): void {
+  show(event: MouseEvent, itemEl: HTMLElement, singleTarget = false, suppliedItem?: VFSNodeUI): void {
     event.preventDefault();
     event.stopPropagation();
     this.hide();
@@ -61,7 +62,7 @@ export class ContextMenuHandler {
     let contextItem: VFSNodeUI | null = null;
 
     if (singleTarget) {
-      contextItem = this.callbacks.findItemById(itemId);
+      contextItem = suppliedItem ?? this.callbacks.findItemById(itemId);
       if (!contextItem) return;
       menuItems = this.buildContextMenuItems(contextItem);
     } else if (selectedItemIds.size > 1 && isTargetSelected) {
@@ -94,8 +95,7 @@ export class ContextMenuHandler {
 
   private actions(item: VFSNodeUI | null): MenuItem[] {
     if (item) {
-      const current = this.callbacks.findItemById(item.id);
-      return current ? this.buildContextMenuItems(current) : [];
+      return this.buildContextMenuItems(item);
     }
     const ids = [...this.store.getState().selectedItemIds];
     const selected = ids.map(id => this.callbacks.findItemById(id)).filter((node): node is VFSNodeUI => !!node);
@@ -113,9 +113,10 @@ export class ContextMenuHandler {
     if (!entry || entry.type === 'separator' || entry.disabled) return Promise.resolve();
     const target = item ?? this.callbacks.findItemById([...this.store.getState().selectedItemIds][0]);
     return this.runner.run(action.replace(/^bulk-/, ''), async () => {
-      const latest = this.actions(item).find(candidate => candidate.type !== 'separator' && candidate.id === action && !candidate.disabled);
+      const current = target ? this.callbacks.readItem ? await this.callbacks.readItem(target.id) : this.callbacks.findItemById(target.id) : null;
+      if (this.runner.signal.aborted || target && !current) return;
+      const latest = this.actions(item ? current : null).find(candidate => candidate.type !== 'separator' && candidate.id === action && !candidate.disabled);
       if (!latest || latest.type === 'separator') return;
-      const current = target ? this.callbacks.findItemById(target.id) : null;
       if (latest.onClick && current) await latest.onClick(current);
       else await this.handleAction(action, item ? current : null, position);
     });
