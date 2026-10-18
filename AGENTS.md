@@ -2,6 +2,8 @@
 
 文件/资源浏览 UI — `createVFSBrowser`、`VFSUIShell`、`VFSService`、数据源与动作契约。
 
+`Drawer` 提供独立于文件系统的可折叠分区、可选搜索与 `mountActions` 生命周期。查询和业务回调属于宿主；移动同一组件不重建搜索或内容，宿主内容的销毁仍由宿主负责。用法见 [组件文档](./doc/components.md#可复用抽屉)。虚拟 group 菜单执行前从当前 listItems 投影重新核对；真实文件继续从授权 driver 重读，不能用旧展示节点回退已删除文件。
+
 ## 命令
 
 ```bash

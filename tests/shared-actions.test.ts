@@ -90,3 +90,21 @@ it('opens and executes a menu for an unloaded resource while navigation is hidde
         expect(children).not.toHaveBeenCalled(); expect(f.ui.getNode('/target/unloaded.md')).toBeUndefined();
     } finally {await f.destroy();}
 });
+
+it('rechecks host-projected groups without requiring a filesystem node and declines a removed group', async () => {
+    const {manager} = await createVFS({rootBackend: new MemoryBackend()});
+    const fs = await manager.openFileSystem('/'), container = document.createElement('div'); document.body.append(container);
+    const run = vi.fn(); let present = true;
+    const ui = createVFSUI({sessionListContainer: container, persistence: false, autoSelectFirst: false,
+        listItems: () => present ? [{id: '/virtual-group', kind: 'group', type: 'directory', version: '1', children: [],
+            metadata: {title: 'Group', path: '/virtual-group', parentPath: null, tags: [], createdAt: '', lastModified: '', custom: {_readOnly: true}}}] : [],
+        contextMenu: {items: () => [{id: 'host-action', label: 'Host action', onClick: run}]}}, fs);
+    try {
+        await ui.start(); await ui.showItemMenu(new MouseEvent('contextmenu'), '/virtual-group');
+        document.querySelector<HTMLButtonElement>('[data-action="host-action"]')!.click();
+        await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
+        await ui.showItemMenu(new MouseEvent('contextmenu'), '/virtual-group'); present = false;
+        document.querySelector<HTMLButtonElement>('[data-action="host-action"]')!.click();
+        await new Promise(resolve => setTimeout(resolve, 0)); expect(run).toHaveBeenCalledOnce();
+    } finally {ui.destroy(); await manager.dispose();}
+});

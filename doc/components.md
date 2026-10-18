@@ -8,6 +8,33 @@
 
 ## 简明入口
 
+### 可复用抽屉
+
+`Drawer` 是不依赖文件系统的布局组件，可用于资源、智能体或已打开窗口等独立列表。它只管理标题、折叠、搜索框与动作挂载，不定义列表数据、过滤规则、网络请求或业务操作。
+
+```ts
+const drawer = new Drawer({
+  title: 'Resources',
+  collapsed: false,
+  search: {
+    label: 'Filter resources',
+    visible: true,
+    onChange: query => renderFilteredResources(query),
+  },
+  mountActions: container => mountResourceActions(container),
+});
+sidebar.append(drawer.element);
+drawer.content.append(resourceList);
+```
+
+省略 `search` 或传 `false` 时不创建搜索框；`search.visible` 和 `setSearchVisible()` 控制已配置搜索框的显示，隐藏不清空查询。`setQuery()` 用于同步宿主查询，不触发 `onChange`，避免反馈循环。异步查询的取消和过期结果校验由宿主负责。
+
+`mountActions` 接收可信宿主控件的挂载容器，可返回清理函数；`destroy()` 解绑事件并执行清理，即使清理抛错也移除组件 DOM。内容由宿主创建和释放，组件不推断内容的生命周期。移动抽屉 DOM 不重建输入、查询或内容实例。
+
+`showHeader: false` 可用于已有标题栏的列表或弹层，标题仍作为可访问名称；此时不调用 `mountActions`。`collapsible: false` 固定展开。默认由 `content` 滚动；宿主内容已有滚动容器时使用 `scrollMode: 'host'`，保持标题和搜索区固定。宿主通过公开变量 `--vfs-drawer-border/background/accent` 调整外观，不依赖内部 DOM 或 CSS 类名。
+
+### 资源浏览器
+
 ```ts
 const browser = createVFSBrowser({
   container,

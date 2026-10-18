@@ -5,6 +5,8 @@
 
 0.5.4 提供实例展示配置、抽屉节点声明、展开通知和冒泡资源激活事件；宿主通过公开 CSS 变量和 `toolbarOptions.variant` 调整样式，不需要访问组件内部 DOM。
 
+`Drawer` 还可独立承载宿主列表，不需要文件系统：可配置折叠、独立搜索及 `mountActions`，搜索显示通过 `search.visible` / `setSearchVisible()` 控制。组件只发布查询变化，宿主负责过滤或异步搜索；同一抽屉可在侧栏和弹层之间移动并保留输入与内容。见 [抽屉接口](./doc/components.md#可复用抽屉)。
+
 ## 安装与文件浏览
 
 ```bash

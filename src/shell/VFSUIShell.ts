@@ -331,7 +331,10 @@ export class VFSUIShell {
   private async readMenuItem(path: string): Promise<VFSNodeUI | null> {
     if (!this.engine) return this.getNode(path) ?? null;
     const node = await this.engine.driver.getNode(path);
-    if (!node) return null;
+    if (!node) {
+      const projected = this.options.listItems && findNodeById(this.options.listItems(this.statePort.getState().items), path);
+      return projected?.kind === 'group' ? projected : null;
+    }
     const item = mapFSNodeToUIItem(node, (name, directory) => this.fileTypePort.getIcon(name, directory), undefined, this.options.showFileExtensions);
     return this.options.contextMenu?.mapItem?.(item) ?? item;
   }

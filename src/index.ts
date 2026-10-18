@@ -36,3 +36,4 @@ export type { PublicEventMap, PublicEventName, PublicEventPayload } from './cont
 export { EngineTagSource } from './mention/EngineTagSource';
 
 export { ScopeSelector, type ScopeOption, type ScopeSelectorOptions } from './ui/components/ScopeSelector';
+export { Drawer, type DrawerOptions, type DrawerSearchOptions } from './ui/components/Drawer';

@@ -1,0 +1,20 @@
+.vfs-drawer { display: flex; flex-direction: column; min-height: 0; min-width: 0; color: inherit; }
+.vfs-drawer__header { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 6px 10px; border-bottom: 1px solid var(--vfs-drawer-border, var(--mm-border-color, #e2e8f0)); }
+.vfs-drawer__title { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 4px 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.vfs-drawer__title::before { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); flex-shrink: 0; }
+.vfs-drawer__title[aria-expanded='false']::before { transform: rotate(-45deg); }
+.vfs-drawer__title:disabled { opacity: 1; cursor: default; }
+.vfs-drawer__title:disabled::before { display: none; }
+.vfs-drawer__actions { display: flex; align-items: center; gap: 4px; }
+.vfs-drawer__actions > button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 4px; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.vfs-drawer__actions svg { width: 18px; height: 18px; flex-shrink: 0; }
+.vfs-drawer__body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.vfs-drawer__body[hidden], .vfs-drawer__search[hidden] { display: none; }
+.vfs-drawer__search { box-sizing: border-box; flex-shrink: 0; width: calc(100% - 16px); min-height: 36px; margin: 8px; padding: 8px 10px; border: 1px solid var(--vfs-drawer-border, var(--mm-border-color, #e2e8f0)); border-radius: 6px; color: inherit; background: var(--vfs-drawer-background, var(--mm-bg-color, #fff)); font: inherit; }
+.vfs-drawer__content { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
+.vfs-drawer--host-scroll > .vfs-drawer__body > .vfs-drawer__content { overflow: hidden; }
+.vfs-drawer__title:focus-visible, .vfs-drawer__actions > button:focus-visible, .vfs-drawer__search:focus-visible { outline: 2px solid var(--vfs-drawer-accent, var(--primary-color, #6366f1)); outline-offset: -2px; }
+@media (max-width: 768px) {
+    .vfs-drawer__title, .vfs-drawer__actions > button, .vfs-drawer__search { min-height: 44px; }
+    .vfs-drawer__actions > button { width: 44px; }
+}
