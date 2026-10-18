@@ -65,6 +65,8 @@ export interface VFSUIShellOptions extends BrowserBaseOptions, VFSRowActionOptio
   columns?: import('./ColumnLayout').VFSColumnsOptions;
   toolbar?: 'full' | 'compact' | 'hidden';
   listItems?: (items: VFSNodeUI[]) => VFSNodeUI[];
+  /** Load host-projected child containers when their visible parent expands or refreshes. */
+  navigationChildren?: (node: VFSNodeUI) => string[];
   listHeader?: HTMLElement;
   /** Render selected display directories as expandable cards. */
   cardDirectory?: (node: VFSNodeUI) => boolean;
@@ -243,8 +245,10 @@ export class VFSUIShell {
   }
 
   private restoreExpansion(): Promise<void> {
-    return this.presentation.trace('vfsUi.restoreExpansion', () =>
-      this.engineAdapter.restoreExpansion(this.statePort.getState().expandedFolderIds));
+    return this.presentation.trace('vfsUi.restoreExpansion', async () => {
+      await this.engineAdapter.restoreExpansion(this.statePort.getState().expandedFolderIds);
+      await this.refreshNavigationChildren(false);
+    });
   }
 
   private deferExpansion(): void {
@@ -417,13 +421,14 @@ export class VFSUIShell {
   private async loadNavigationChildren(path: string, reload = false): Promise<void> {
     const node = findNodeById(this.statePort.getState().items, path);
     if (!node) return;
-    for (const child of this.options.columns?.navigationChildren?.(node) ?? []) {
+    const children = this.options.navigationChildren ?? this.options.columns?.navigationChildren;
+    for (const child of children?.(node) ?? []) {
       if (reload || findNodeById(this.statePort.getState().items, child)?.children === undefined)
         await this.engineAdapter.expandDirectory(child, { restoreDescendants: false, expand: false });
     }
   }
-  private async refreshNavigationChildren(): Promise<void> {
-    for (const path of this.statePort.getState().expandedFolderIds) await this.loadNavigationChildren(path, true);
+  private async refreshNavigationChildren(reload = true): Promise<void> {
+    for (const path of this.statePort.getState().expandedFolderIds) await this.loadNavigationChildren(path, reload);
   }
 
   refreshNavigationActions(): void { this.navigationList?.refreshDirectoryActionState(); }

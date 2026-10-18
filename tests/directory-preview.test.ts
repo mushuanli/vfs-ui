@@ -5,6 +5,47 @@ import { createVFSUI, type VFSUIShell } from '../src';
 
 afterEach(() => { document.body.replaceChildren(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
+it.each([false, true])('restores projected children after reloading with deferred expansion %s', async deferExpansion => {
+    const {manager} = await createVFS({rootBackend: new MemoryBackend()}), fs = await manager.openFileSystem('/');
+    await fs.driver.createDirectory({parentPath: '/', name: 'one'});
+    await fs.driver.createDirectory({parentPath: '/one', name: 'container'});
+    await fs.driver.createFile({parentPath: '/one/container', name: 'entry.txt', content: ''});
+    const host = document.createElement('div'); document.body.append(host);
+    const ui = createVFSUI({sessionListContainer: host, autoSelectFirst: false, deferExpansion,
+        persistence: {load: () => ({expandedFolderIds: ['/one']}), save() {}},
+        navigationChildren: node => (node.children ?? []).filter(child => child.id.endsWith('/container')).map(child => child.id)}, fs) as VFSUIShell;
+    try {
+        await ui.start();
+        await vi.waitFor(() => expect(ui.getNode('/one/container')?.children?.map(item => item.id)).toEqual(['/one/container/entry.txt']));
+        expect(ui.getSnapshot().expandedIds).toContain('/one');
+        expect(ui.getSnapshot().expandedIds).not.toContain('/one/container');
+    } finally {ui.destroy(); await manager.dispose();}
+});
+
+it('loads projected containers in a single list on expansion and refresh without reading collapsed branches', async () => {
+    const {manager} = await createVFS({rootBackend: new MemoryBackend()}), fs = await manager.openFileSystem('/');
+    for (const parent of ['one', 'two']) {
+        await fs.driver.createDirectory({parentPath: '/', name: parent});
+        await fs.driver.createDirectory({parentPath: '/' + parent, name: 'container'});
+        await fs.driver.createFile({parentPath: '/' + parent + '/container', name: 'entry.txt', content: ''});
+    }
+    const host = document.createElement('div'); document.body.append(host);
+    const reads = vi.spyOn(fs.driver, 'getChildren');
+    const ui = createVFSUI({sessionListContainer: host, persistence: false, autoSelectFirst: false,
+        navigationChildren: node => (node.children ?? []).filter(child => child.id.endsWith('/container')).map(child => child.id)}, fs) as VFSUIShell;
+    try {
+        await ui.start();
+        host.querySelector<HTMLElement>('[data-item-id="/one"] [data-action="toggle-folder"]')!.click();
+        await vi.waitFor(() => expect(ui.getNode('/one/container')?.children).toHaveLength(1));
+        reads.mockClear(); await ui.refresh();
+        expect(ui.getNode('/one/container')?.children).toHaveLength(1);
+        expect(ui.getSnapshot().expandedIds).toContain('/one');
+        expect(ui.getSnapshot().expandedIds).not.toContain('/one/container');
+        expect(reads.mock.calls.some(([path]) => path === '/one/container')).toBe(true);
+        expect(reads.mock.calls.some(([path]) => path.startsWith('/two'))).toBe(false);
+    } finally {ui.destroy(); await manager.dispose();}
+});
+
 it('limits only presentation, keeps actions after toggling, reveals selection and searches hidden children', async () => {
     const { manager } = await createVFS({ rootBackend: new MemoryBackend() }), fs = await manager.openFileSystem('/');
     for (const name of ['one', 'two']) await fs.driver.createDirectory({ parentPath: '/', name });

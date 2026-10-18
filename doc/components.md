@@ -118,6 +118,8 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 
 持久化使用带 version 的 UI 状态记录，兼容旧无版本记录；相同快照不重复写入。简明入口默认关闭持久化，避免实例共享默认选择状态。
 
+高级入口的 `VFSUIOptions.navigationChildren(node)` 为 `listItems` 投影声明当前展开节点需要加载的直接子容器 ID。单栏和双栏共用展开、启动恢复和刷新链路；容器只加载 children，不自动展开，也不预读折叠分支。顶层配置优先于兼容的 `columns.navigationChildren`。显式 `loadDirectory(path)` 仍可按需加载单个容器并向宿主报告失败。
+
 基础 reset 限定在 `.vfs-ui` 范围，弹出菜单也设置该作用域，独立 ScopeSelector 使用自己的组件类；不修改宿主 body、全局按钮或列表。宿主通过公开展示选项和 CSS 变量定制，不能依赖内部 DOM 类名或覆盖内部组件选择器。
 
 ### 展示、抽屉与导航通知（0.5.4）
