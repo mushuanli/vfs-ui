@@ -100,6 +100,8 @@ await move({ selection: selectedResourceIds, destination: targetId }, signal);
 
 `directoryPreview(node)` 可返回目录初始显示的子项数；不配置时显示全部。双列导航可单独配置 `columns.navigationDirectoryPreview`。超过数量后提供“显示更多／收起”；展开后的子列表限制高度并独立滚动，收起按钮固定在底部；当前项、选中项及其祖先仍可见，搜索时不截断结果。限制仅作用于呈现，原始树、选择范围和导出不变，展开状态在当前组件生命周期内保留。
 
+若完整列表由宿主页面呈现，可返回 `DirectoryPreviewOptions`：`{ limit: 15, moreLabel: '更多条目', open: directory => openDirectory(directory.id) }`。此模式先筛选、排序再截取，搜索和选中均不突破数量上限；超出时显示按钮，由宿主打开完整目录，不在原列表展开。`open` 接收原目录身份，同一目录的进行中操作去重，失败通过 `onError` 报告并允许重试。该限制仅影响当前列表的呈现，不改变数据源或其他目录视图。
+
 `createVFSUI(options, fs)` 返回 `VFSUIShell`。`VFSUIOptions` 是 `VFSUIShellOptions` 的别名，只有一份配置声明；Shell 不再继承 ISessionUI。
 
 常用配置：

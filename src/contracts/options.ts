@@ -3,6 +3,13 @@ import type { FavoriteAction, VFSNodeUI } from './types';
 export type { FileCreationConfig } from './components';
 export type BrowserBaseOptions = ResourceListOptions<VFSNodeUI>;
 
+/** A strict directory preview whose overflow opens a host-owned view. */
+export interface DirectoryPreviewOptions {
+    readonly limit: number;
+    readonly moreLabel: string;
+    open(directory: VFSNodeUI): void | Promise<void>;
+}
+
 /** A fixed navigation action; its active state is independent of mutable resource selection. */
 export interface DirectoryAction {
     /** Insert after the direct child with this resource ID; falls back to the end. */

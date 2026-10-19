@@ -1,3 +1,5 @@
+import type { DirectoryPreviewOptions } from '../../../contracts/options';
+import type { ActionRunner } from '../../../interaction/ActionRunner';
 import { defaultPresentation, type VFSPresentation } from '../../../contracts/presentation';
 /**
  * @file vfs-ui/ui/components/NodeList/NodeListRenderer.ts
@@ -21,11 +23,12 @@ export interface RenderContext {
 }
 
 export interface NodeListRendererOptions {
+  actions: ActionRunner;
   presentation?: VFSPresentation;
   selectionHandler: SelectionHandler;
   leafDirectory?: (node: VFSNodeUI) => boolean;
   cardDirectory?: (node: VFSNodeUI) => boolean;
-  directoryPreview?: (node: VFSNodeUI) => number | undefined;
+  directoryPreview?: (node: VFSNodeUI) => number | DirectoryPreviewOptions | undefined;
   /** Host-owned favorite state; undefined rows render no control. */
   favoriteAction?: FavoriteAction;
 }
@@ -46,7 +49,7 @@ export class NodeListRenderer {
     this.leafDirectory = options.leafDirectory;
     this.cardDirectory = options.cardDirectory;
     this.favoriteAction = options.favoriteAction;
-    this.preview = new DirectoryPreview(options.directoryPreview, this.ui);
+    this.preview = new DirectoryPreview(options.actions, options.directoryPreview, this.ui);
   }
 
   renderItems(
@@ -54,6 +57,7 @@ export class NodeListRenderer {
     state: NodeListState,
     context: RenderContext
   ): void {
+    this.preview.beginRender();
     this.rerender = focusId => {
       if (context.onPreviewChange) context.onPreviewChange(); else this.renderItems(container, state, context);
       for (const control of container.querySelectorAll<HTMLButtonElement>('[data-preview-id]')) {
@@ -154,7 +158,7 @@ export class NodeListRenderer {
             newInstances,
             visitedIds
           );
-          if (preview.expanded !== undefined) childrenContainer.append(this.preview.control(item.id, preview.expanded, preview.hidden!, () => {
+          if (preview.expanded !== undefined) childrenContainer.append(this.preview.control(item, preview.expanded, preview.hidden!, () => {
             this.rerender?.(item.id);
           }));
           if (preview.expanded) childrenContainer.scrollTop = scrollTop;

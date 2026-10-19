@@ -1,6 +1,6 @@
 import { mapFSNodeToUIItem } from '../services/NodeMapper';
 import { createPresentation, type VFSPresentationOptions, type VFSPresentation } from '../contracts/presentation';
-import type { DirectoryAction } from '../contracts/options';
+import type { DirectoryAction, DirectoryPreviewOptions } from '../contracts/options';
 import { SourceAdapter } from '../browser/SourceAdapter';
 import type { VFSListSort } from '../contracts/types';
 // shell/VFSUIShell.ts
@@ -71,8 +71,8 @@ export interface VFSUIShellOptions extends BrowserBaseOptions, VFSRowActionOptio
   listHeader?: HTMLElement;
   /** Render selected display directories as expandable cards. */
   cardDirectory?: (node: VFSNodeUI) => boolean;
-  /** Preview child count; active/selected entries and search matches stay visible. */
-  directoryPreview?: (node: VFSNodeUI) => number | undefined;
+  /** Numeric limits expand inline; object limits stay strict and open the host view. */
+  directoryPreview?: (node: VFSNodeUI) => number | DirectoryPreviewOptions | undefined;
   alwaysLoadedDirectories?: string[];
   /** Hide .gitignore matches in file presentation; disable for synthetic resource trees. */
   hideGitignored?: boolean;

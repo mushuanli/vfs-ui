@@ -1,5 +1,5 @@
 import { defaultPresentation, type VFSPresentation } from '../contracts/presentation';
-import type { DirectoryAction } from '../contracts/options';
+import type { DirectoryAction, DirectoryPreviewOptions } from '../contracts/options';
 import type { VFSNodeUI } from '../contracts/types';
 
 export interface VFSColumnsOptions {
@@ -18,7 +18,7 @@ export interface VFSColumnsOptions {
     contentItems?: (items: VFSNodeUI[]) => VFSNodeUI[];
     navigationAction?: DirectoryAction;
     navigationCard?: (node: VFSNodeUI) => boolean;
-    navigationDirectoryPreview?: (node: VFSNodeUI) => number | undefined;
+    navigationDirectoryPreview?: (node: VFSNodeUI) => number | DirectoryPreviewOptions | undefined;
     /** Additional directories whose children are projected directly into an expanded navigation row. */
     navigationChildren?: (node: VFSNodeUI) => string[];
     navigationCompareItems?: (a: VFSNodeUI, b: VFSNodeUI) => number | undefined;

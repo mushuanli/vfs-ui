@@ -2,7 +2,7 @@ import { DirectoryActions } from './DirectoryActions';
 import { renderInlineCreation } from './InlineCreation';
 import { createRowMutationPort } from './handlers/RowMutationPort';
 import { resolveRowPolicy, type RowPolicy } from '../../../utils/row-policy';
-import type { DirectoryAction, VFSRowActionOptions } from '../../../contracts/options';
+import type { DirectoryAction, DirectoryPreviewOptions, VFSRowActionOptions } from '../../../contracts/options';
 import { ActionRunner } from '../../../interaction/ActionRunner';
 import type { VFSListSort } from '../../../contracts/types';
 import { actionMenuItems, actionVisible, type VFSActionContext, toolbarHTML, type VFSToolbarOptions, type VFSToolbarAction } from './toolbar';
@@ -39,7 +39,7 @@ interface NodeListOptions extends BaseComponentDeps, VFSRowActionOptions {
   toolbarContainer?: HTMLElement;
   rootPath?: () => string | null;
   cardDirectory?: (node: VFSNodeUI) => boolean;
-  directoryPreview?: (node: VFSNodeUI) => number | undefined;
+  directoryPreview?: (node: VFSNodeUI) => number | DirectoryPreviewOptions | undefined;
   leafDirectory?: (node: VFSNodeUI) => boolean;
   toolbar?: 'full' | 'compact' | 'hidden';
   toolbarOptions?: VFSToolbarOptions;
@@ -215,7 +215,7 @@ export class NodeList extends BaseComponent<NodeListState> {
         this.settingsPopover.toggle(this.state.uiSettings),
     });
 
-    this.renderer = new NodeListRenderer({ presentation: this.ui, selectionHandler: this.selectionHandler, leafDirectory: options.leafDirectory,
+    this.renderer = new NodeListRenderer({ actions: this.actions, presentation: this.ui, selectionHandler: this.selectionHandler, leafDirectory: options.leafDirectory,
       cardDirectory: options.cardDirectory, directoryPreview: options.directoryPreview, favoriteAction: options.favoriteAction });
 
     if (options.title) this.setTitle(options.title);
