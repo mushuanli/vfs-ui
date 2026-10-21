@@ -205,7 +205,12 @@ export class VFSUIShell {
     if (this.statePort.getState().expandedFolderIds.has(folderId) !== expanded)
       this.commandPort.execute('nav:toggleFolder', { folderId });
   }
-  setQuery(query: string): void { this.statePort.dispatch({ type: 'SEARCH_QUERY_UPDATE', payload: { query } }); }
+  /** Include text still waiting for the search debounce, for composing external filters. */
+  getQuery(): string { return this.nodeList.getQuery(); }
+  setQuery(query: string): void {
+    this.nodeList.setQuery(query);
+    this.statePort.dispatch({ type: 'SEARCH_QUERY_UPDATE', payload: { query } });
+  }
   setSelection(ids: string[]): void { this.statePort.dispatch({ type: 'ITEM_SELECTION_REPLACE', payload: { ids } }); }
   allowsBulkAction(action: 'delete' | 'move' | 'export' | 'copy', ids: string[]): boolean {
     this.setSelection(ids); return this.nodeList.allowsBulkAction(action);

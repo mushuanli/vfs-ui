@@ -129,7 +129,9 @@ await move({ selection: selectedResourceIds, destination: targetId }, signal);
 
 右键菜单的收藏项进入默认菜单后再交给宿主 `contextMenu.items` 过滤，因此宿主菜单策略仍是唯一权威；收藏读写宿主元数据而非资源本身，只读条目同样可以收藏。选择属于视图级语义，行级只读只限制修改（拖拽、删除、重命名、移动）。
 
-Shell 提供 `getNode/updateNodeMetadata/setQuery/setSelection/setExpanded/getSnapshot`，宿主不再访问 store.dispatch。getSnapshot 仅返回冻结的 activeId/query/selectedIds/expandedIds，不暴露内部 Store、可变 Set 或缓存。
+Shell 提供 `getNode/updateNodeMetadata/getQuery/setQuery/setSelection/setExpanded/getSnapshot`，宿主不再访问 store.dispatch。getQuery 包含仍在搜索防抖中的文字，setQuery 取消旧防抖并同步搜索框，供宿主组合筛选条件；销毁取消待执行的搜索。getSnapshot 仅返回冻结的 activeId/query/selectedIds/expandedIds，不暴露内部 Store、可变 Set 或缓存。
+
+`presentation.tagLabel(tag)` 可将稳定的标签 ID 格式化为用户可读的文案；renderer 按文本转义，查询的 `tag:` token 和持久身份保持原值。
 
 `selectPath` 定位并激活；`expandPath` 仅展开。自定义 source 根据 parentId 寻找祖先，标准文件 adapter 处理路径。后台刷新保留当前选择与已展开分支。
 
@@ -192,7 +194,11 @@ VFSNodeUI 是高级文件视图的展示模型，保留原 metadata/content 字�
 
 宿主可用 `titleHeader` 替换标题行；插槽自动占满可用宽度且不额外添加内边距，宿主负责标题内容的布局与留白。通过 `toolbarContainer` 将原有工具栏控件挂到宿主标题区（保留事件、上下文和权限检查），使用 `rowCreation` 在可写目录行提供创建图标；执行前重新检查同一 row-policy。`allowsBulkAction` / `runBulkAction` 复用 ContextMenuHandler 的批量菜单过滤、删除确认与移动选择器，宿主不直接操作 store 或复制授权逻辑。
 
-未提供 `titleHeader` 的普通侧栏使用统一的标题、搜索区和列表留白：新建文件为主色按钮，新建目录为描边按钮，导入导出为轻量图标按钮；触屏控件至少 44px，窄侧栏将创建操作排在第一行。创建图标复用实例的 `presentation.icons.addFile/addFolder`。可通过公开 CSS 变量 `--vfs-primary-action-bg`、`--vfs-primary-action-text` 设置主操作颜色；项目等自定义标题栏继续使用自己的布局和 `toolbarOptions.variant`。
+未提供 `titleHeader` 的普通侧栏使用统一的标题、搜索区和列表留白：新建文件为主色按钮，新建目录为描边按钮，导入导出为轻量图标按钮；手机与触屏工具栏保持单行，将原有导入/导出控件移动至「更多」菜单，控件及菜单项至少 44px 高，恢复宽屏时移回原位置。菜单保留权限和等待状态，Escape 或点击外部关闭。创建和更多图标复用实例的 `presentation.icons.addFile/addFolder/more`。可通过公开 CSS 变量 `--vfs-primary-action-bg`、`--vfs-primary-action-text` 设置主操作颜色；项目等自定义标题栏继续使用自己的布局和 `toolbarOptions.variant`。
+
+外围宿主已显示列表名称时，可设 `appearance.showTitle: false` 隐藏标准标题行；`titleHeader` 自定义标题保留。抽屉标题固定单行，过长时省略并通过 title 提供完整名称。
+
+`toolbarOptions.root` 可为默认工具栏提供根目录导航的 `label`、`title` 和异步 `run()`，入口显示在刷新按钮之前，复用工具栏的动作错误处理。自定义 `items` / `definitions` 仍完整决定工具栏内容。
 
 宿主目录详情与已打开列表通过 `getResourceIcon(node)` 复用节点显式图标、已注册文件类型图标及默认图标；图标容器使用 `file-type-icon` 复用资源浏览的浅色/深色主题配色。公共 `formatFileSize(bytes)` 提供 B、KiB、MiB 等易读大小，未知大小显示破折号。
 

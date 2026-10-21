@@ -109,7 +109,7 @@ export const createFileItemHTML = (
 
   const tagsHTML =
     uiSettings.showTags && tags.length > 0
-      ? tags.map(tag => `<span class="vfs-tag-pill">${escapeHTML(tag)}</span>`).join('')
+      ? tags.map(tag => `<span class="vfs-tag-pill">${escapeHTML(ui.tagLabel?.(tag) ?? tag)}</span>`).join('')
       : '';
 
   const summaryHTML =
@@ -209,7 +209,7 @@ export const createDirectoryItemHTML = (
       : '';
 
   const tagsHtml = tags.length
-    ? `<div class="vfs-directory-item__tags">${tags.map(t => `<span class="vfs-tag-pill">${escapeHTML(t)}</span>`).join('')}</div>`
+    ? `<div class="vfs-directory-item__tags">${tags.map(tag => `<span class="vfs-tag-pill">${escapeHTML(ui.tagLabel?.(tag) ?? tag)}</span>`).join('')}</div>`
     : '';
 
   return `

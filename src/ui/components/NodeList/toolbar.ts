@@ -39,6 +39,8 @@ export interface VFSToolbarOptions {
     fileLabel?: string;
     directoryLabel?: string;
     directoryFirst?: boolean;
+    /** Optional root navigation beside the built-in refresh control. */
+    root?: { label: string; title: string; run(): Promise<void> };
     actions?: Partial<Record<VFSToolbarAction, (context: VFSToolbarContext) => Promise<void>>>;
     /** A compact title-bar action, such as returning to the navigation list. */
     secondary?: { label: string; run(): void };
@@ -56,8 +58,13 @@ export function toolbarHTML(options: VFSToolbarOptions, fileLabel: string, ui: V
         const create = action.startsWith('create-'), label = labels[action];
         const title = create ? ui.t('vfs.toolbar.create', { name: label }) : label;
         const icon = action === 'create-file' ? 'addFile' : action === 'create-directory' ? 'addFolder' : action as 'import' | 'export' | 'refresh';
-        return { create, html: `<button type="button" class="vfs-node-list__new-btn ${create ? '' : 'vfs-node-list__new-btn--icon'}" data-action="${action}" title="${escapeHTML(title)}" aria-label="${escapeHTML(title)}">${ui.icon(icon)}<span class="vfs-node-list__button-label">${escapeHTML(label)}</span></button>` };
+        return { action, create, html: `<button type="button" class="vfs-node-list__new-btn ${create ? '' : 'vfs-node-list__new-btn--icon'}" data-action="${action}" title="${escapeHTML(title)}" aria-label="${escapeHTML(title)}">${ui.icon(icon)}<span class="vfs-node-list__button-label">${escapeHTML(label)}</span></button>` };
     });
+    if (options.root) {
+        const index = buttons.findIndex(button => button.action === 'refresh');
+        buttons.splice(index < 0 ? buttons.length : index, 0, { action: 'open-root', create: false,
+            html: `<button type="button" class="vfs-node-list__new-btn vfs-node-list__new-btn--icon" data-action="open-root" title="${escapeHTML(options.root.title)}" aria-label="${escapeHTML(options.root.title)}">${escapeHTML(options.root.label)}</button>` });
+    }
     if (options.variant === 'plain') return buttons.map(button => button.html).join('');
     return [true, false].map(create => {
         const html = buttons.filter(button => button.create === create).map(button => button.html).join('');

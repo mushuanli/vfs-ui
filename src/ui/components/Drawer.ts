@@ -43,7 +43,8 @@ export class Drawer {
     private header(): void {
         const header = document.createElement('div'); header.className = 'vfs-drawer__header';
         this.title.type = 'button'; this.title.className = 'vfs-drawer__title';
-        this.title.textContent = this.options.title; this.title.disabled = this.options.collapsible === false;
+        const label = document.createElement('span'); label.className = 'vfs-drawer__label'; label.textContent = this.options.title;
+        this.title.append(label); this.title.title = this.options.title; this.title.disabled = this.options.collapsible === false;
         this.title.addEventListener('click', () => {
             const collapsed = !this.body.hidden; this.setCollapsed(collapsed); this.options.onToggle?.(collapsed);
         }, {signal: this.abort.signal});

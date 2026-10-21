@@ -5,6 +5,7 @@
 .vfs-drawer__title[aria-expanded='false']::before { transform: rotate(-45deg); }
 .vfs-drawer__title:disabled { opacity: 1; cursor: default; }
 .vfs-drawer__title:disabled::before { display: none; }
+.vfs-drawer__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vfs-drawer__actions { display: flex; align-items: center; gap: 4px; }
 .vfs-drawer__actions > button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 4px; border: 0; background: transparent; color: inherit; cursor: pointer; }
 .vfs-drawer__actions svg { width: 18px; height: 18px; flex-shrink: 0; }

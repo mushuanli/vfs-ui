@@ -45,6 +45,17 @@
 .vfs-node-list__toolbar-group--create > .vfs-node-list__new-btn { flex: 1; }
 .vfs-node-list__toolbar-group--transfer { flex-shrink: 0; }
 .vfs-node-list__menu .vfs-node-list__toolbar-group { display: contents; }
+
+.vfs-toolbar-overflow { position: relative; flex-shrink: 0; color: var(--text-secondary, #64748b); }
+.vfs-toolbar-overflow[hidden] { display: none; }
+.vfs-toolbar-overflow:not([open]) > .vfs-toolbar-overflow__items { display: none; }
+.vfs-toolbar-overflow > summary { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; list-style: none; cursor: pointer; border-radius: 8px; }
+.vfs-toolbar-overflow > summary::-webkit-details-marker { display: none; }
+.vfs-toolbar-overflow > summary svg { width: 18px; height: 18px; flex-shrink: 0; }
+.vfs-toolbar-overflow > summary:focus-visible { outline: 2px solid var(--primary-color, #6366f1); outline-offset: -2px; }
+.vfs-toolbar-overflow__items { position: absolute; right: 0; top: 100%; z-index: 40; display: flex; flex-direction: column; min-width: 144px; padding: 6px; border: 1px solid var(--mm-border-color, #e2e8f0); border-radius: 8px; background: var(--mm-bg-color, #fff); box-shadow: 0 8px 24px #0002; }
+.vfs-node-list .vfs-toolbar-overflow .vfs-toolbar-overflow__items > button.vfs-node-list__new-btn { justify-content: flex-start; width: 100%; min-height: 44px; }
+.vfs-toolbar-overflow .vfs-node-list__button-label { display: inline; }
 .vfs-ui--hide-timestamps .vfs-node-item__timestamp { display: none; }
 .vfs-ui--menus-always [data-action="item-menu"] { opacity: 1; }
 .vfs-ui--menus-hover [data-action="item-menu"] { opacity: 0; }

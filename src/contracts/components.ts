@@ -23,6 +23,8 @@ export interface FileCreationConfig {
 }
 /** Instance display choices; component markup and responsive styling stay private. */
 export interface VFSListAppearance {
+    /** Hide the standard title when a surrounding host header already names the list. */
+    showTitle?: boolean;
     showTimestamp?: boolean;
     menuVisibility?: 'hover' | 'always';
 }

@@ -35,7 +35,9 @@ src/
 - 编辑器连接、媒体预览、mention 及 Markdown 元数据策略位于 `app-shell/src/browser/`，不在本包。
 - 本包仅依赖 vfs-core。消费方契约在 contracts/ 定义；通过结构兼容接口接收宿主能力，禁止重新引入 common/ui-common 或其他业务包。
 - 翻译、图标和启动跟踪经 presentation 按实例注入；内置默认值保证无宿主适配时也能使用。
+- presentation.tagLabel 只格式化标签的显示文案，不改变 tag 身份、搜索语法或持久化内容，返回值继续按文本转义。
 - 宿主使用语义 API，不能访问内部 store.dispatch。
+- getQuery() 包含仍在防抖中的输入文字；setQuery() 取消旧防抖任务并同步搜索框，供宿主组合标签筛选，不能在稍后恢复旧查询。后台状态更新保留尚未提交的搜索文字，销毁取消防抖任务。
 - 内部 DOM/CSS 类名不是宿主契约。展示使用 appearance、NodePresentation、toolbarOptions.variant 和公开 CSS 变量；资源激活与展开变化通过公开事件及 VFS_DOM_EVENTS 通知。抽屉是目录的展示形式，分组成员和业务动作由宿主提供。
 - 行级读写策略只在 `utils/row-policy.ts` 定义（`resolveRowPolicy` / `resolveColumnReadOnly` / `ROW_FLAGS`）；renderer、右键菜单、拖拽与行处理器都是机制，禁止各自重新推导 `_readOnly` / `_fixedEntry` / `quickDelete`。
 - 虚拟目录可通过 `presentation.quickDelete` 开启两步行内删除；`onQuickDelete(node)` 接入宿主生命周期，在第二次确认后执行。未提供回调时走普通文件删除；固定入口及只读条目不开放。行内控件的两次点击本身就是确认，第二次点击直接进删除管线，不再复用右键菜单动作（否则会再问一次）；菜单与批量删除各自的确认保持不变。右键菜单策略独立于显式开启的行内操作，且收藏项进入默认菜单，宿主仍可过滤。
@@ -57,3 +59,5 @@ src/
 - VFSUIShell.loadDirectory 只为已存在节点加载 children，保留节点折叠及兄弟目录展开状态，供宿主将隐藏容器成员投影到导航；加载失败向调用方拒绝且允许重试，不包含项目或会话语义。
 
 - `showItemMenu` 的 VFS 目标从授权 driver 按路径解析，不能依赖侧栏可见性或展开状态；执行前重新读取节点及权限。`contextMenu.mapItem` 仅注入宿主的单项展示映射，库不识别项目/Session 路径。菜单项 `iconOnly` 保留 title/aria-label，缺少图标时显示名称。
+
+- 手机和触屏工具栏将现有导入/导出控件移入更多菜单，宽屏恢复原位置，不复制动作和权限状态；菜单支持 Escape、点击外部和执行后关闭。`appearance.showTitle: false` 供已有外围标题的宿主隐藏标准标题行；抽屉标题单行省略，自定义标题布局仍由宿主负责。

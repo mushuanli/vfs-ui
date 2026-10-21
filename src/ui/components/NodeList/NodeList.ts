@@ -1,4 +1,5 @@
 import { DirectoryActions } from './DirectoryActions';
+import { ToolbarOverflow } from './ToolbarOverflow';
 import { renderInlineCreation } from './InlineCreation';
 import { createRowMutationPort } from './handlers/RowMutationPort';
 import { resolveRowPolicy, type RowPolicy } from '../../../utils/row-policy';
@@ -78,6 +79,11 @@ export class NodeList extends BaseComponent<NodeListState> {
 
   private readonly bodyEl: HTMLElement;
   private readonly searchEl: HTMLInputElement;
+  private pendingSearch = false;
+  private readonly search = debounce((query: string) => {
+    this.pendingSearch = false;
+    this.commandBus.execute('ui:updateSearch', { query });
+  }, 300);
   private readonly mainContainerEl: HTMLElement;
   private readonly titleEl: HTMLElement;
   private readonly newControlsEl: HTMLElement;
@@ -91,6 +97,7 @@ export class NodeList extends BaseComponent<NodeListState> {
   private readonly rootPath?: () => string | null;
   private readonly toolbar: NodeListOptions['toolbar'];
   private toolbarOptions: VFSToolbarOptions;
+  private toolbarOverflow?: ToolbarOverflow;
   private readonly cardDirectory?: (node: VFSNodeUI) => boolean;
   private readonly fileCreation?: FileCreationConfig;
   private readonly directoryActions?: DirectoryActions;
@@ -142,6 +149,7 @@ export class NodeList extends BaseComponent<NodeListState> {
     this.footerEl = this.container.querySelector('.vfs-node-list__footer')!;
     if (options.toolbar === 'compact') this.installCompactToolbar();
     this.setToolbarOptions(this.toolbarOptions);
+    if (options.toolbar !== 'compact') this.toolbarOverflow = new ToolbarOverflow(this.newControlsEl, this.ui);
     if (options.listHeader) this.newControlsEl.after(options.listHeader);
     options.toolbarContainer?.append(this.newControlsEl);
 
@@ -260,6 +268,7 @@ export class NodeList extends BaseComponent<NodeListState> {
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--single-create', !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--transfer-only', !!options.hiddenActions?.includes('create-file') && !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.innerHTML = toolbarHTML(options, this.fileCreation?.label ?? this.ui.t('vfs.toolbar.file'), this.ui);
+    this.toolbarOverflow?.refresh();
     this.syncCreationControls();
     this.container.querySelector('.vfs-node-list__secondary-action')?.remove();
     if (options.secondary) {
@@ -270,6 +279,11 @@ export class NodeList extends BaseComponent<NodeListState> {
   }
 
   refreshView(): void { this.state = this.transformState(this.store.getState()); this.render(); }
+
+  getQuery(): string { return this.searchEl.value; }
+  setQuery(query: string): void {
+    this.search.cancel(); this.pendingSearch = false; this.searchEl.value = query;
+  }
 
   public setTitle(newTitle: string): void {
     if (this.titleEl) this.titleEl.textContent = newTitle;
@@ -290,8 +304,7 @@ export class NodeList extends BaseComponent<NodeListState> {
     for (const type of ['click', 'dblclick', 'keydown', 'contextmenu', 'dragstart', 'drop']) this.bodyEl.addEventListener(type, event => {
       if ((event.target as Element).closest('[aria-disabled="true"]')) { event.preventDefault(); event.stopImmediatePropagation(); }
     }, true);
-    const search = debounce((query: string) => this.commandBus.execute('ui:updateSearch', { query }), 300);
-    this.searchEl.addEventListener('input', () => search(this.searchEl.value));
+    this.searchEl.addEventListener('input', () => { this.pendingSearch = true; this.search(this.searchEl.value); });
 
     this.newControlsEl.addEventListener('click', this.handleNewControlsClick);
     document.addEventListener('click', this.handleGlobalClick, true);
@@ -333,6 +346,7 @@ export class NodeList extends BaseComponent<NodeListState> {
       if (!CREATION_ACTIONS.has(action)) continue;
       button.disabled = readOnly || this.toolbarOptions.items?.some(item => item.id === action && item.disabled) === true;
     }
+    this.toolbarOverflow?.syncVisibility();
   }
 
   private actionContext(item?: VFSNodeUI): VFSActionContext {
@@ -370,6 +384,11 @@ export class NodeList extends BaseComponent<NodeListState> {
     );
 
     const selectedIds = this.state.selectedItemIds.size ? [...this.state.selectedItemIds] : this.state.activeId ? [this.state.activeId] : [];
+    if (action === 'open-root' && this.toolbarOptions.root) {
+      const button = actionEl as HTMLButtonElement; button.disabled = true;
+      void this.actions.run(action, () => this.toolbarOptions.root!.run()).catch(() => {}).finally(() => { button.disabled = false; });
+      return;
+    }
     if (this.toolbarOptions.definitions?.some(entry => entry.id === action)) {
       const button = actionEl as HTMLButtonElement; button.disabled = true;
       void this.runDefinedAction(action).catch(() => {}).finally(() => this.syncCreationControls());
@@ -610,9 +629,12 @@ export class NodeList extends BaseComponent<NodeListState> {
 
   private buildInitialHTML(options: NodeListOptions): void {
     const searchPlaceholder = options.searchPlaceholder || '搜索 (tag:xx type:file|dir)...';
+    const classes = ['vfs-node-list'];
+    if (!options.titleHeader) classes.push('vfs-node-list--standard-header');
+    if (options.appearance?.showTitle === false && !options.titleHeader) classes.push('vfs-node-list--hide-title');
 
     this.container.innerHTML = `
-      <div class="vfs-node-list${options.titleHeader ? '' : ' vfs-node-list--standard-header'}">
+      <div class="${classes.join(' ')}">
         <div class="vfs-node-list__title-bar">
           <h2 class="vfs-node-list__title" data-ref="title">${escapeHTML(options.title || '文件列表')}</h2>
         </div>
@@ -639,7 +661,7 @@ export class NodeList extends BaseComponent<NodeListState> {
 
     this.newControlsEl.style.display = this.toolbar === 'hidden' ? 'none' : '';
     this.syncCreationControls();
-    if (this.searchEl.value !== this.state.searchQuery) this.searchEl.value = this.state.searchQuery;
+    if (!this.pendingSearch && this.searchEl.value !== this.state.searchQuery) this.searchEl.value = this.state.searchQuery;
     const shouldShowFooter = !this.state.readOnly && this.state.selectedItemIds.size > 1;
     this.footerEl.style.display = shouldShowFooter ? '' : 'none';
 
@@ -689,6 +711,8 @@ export class NodeList extends BaseComponent<NodeListState> {
   public refreshDirectoryActionState(): void { this.directoryActions?.refresh(); }
 
   public destroy(): void {
+    this.search.cancel();
+    this.toolbarOverflow?.destroy();
     this.directoryActions?.destroy();
     this.actions.destroy();
     super.destroy();
