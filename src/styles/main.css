@@ -250,6 +250,8 @@
   min-width: 0;
 }
 
+.vfs-node-item__semantic-icon { flex: 0 0 auto; font-size: 12px; line-height: 20px; }
+
 .vfs-node-item__title {
   font-weight: 500;
   font-size: var(--font-size-base);

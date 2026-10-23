@@ -49,3 +49,15 @@ it('renders icon-only menu actions with accessible labels and falls back to text
     host.innerHTML = createContextMenuHTML([{id: 'fallback', label: 'Fallback', iconOnly: true}]);
     expect(host.querySelector('button')?.textContent).toBe('Fallback');
 });
+
+it('shows host semantic icons even with badges and tags hidden, and escapes labels and icon text', async () => {
+    const {createFileItemHTML} = await import('../src/ui/components/NodeList/items/itemTemplates');
+    const markup = createFileItemHTML({id: '/c', type: 'file', icon: '', version: '1',
+        metadata: {title: 'Connection', path: '/c', tags: [], parentPath: '/', createdAt: '', lastModified: '', custom: {}},
+        presentation: {indicators: [{icon: '<unsafe>', label: 'Image "generation"'}]}},
+        {uiSettings: {showTags: false, showBadges: false}, searchQueries: []} as never, {readOnly: false} as never);
+    const root = container(); root.innerHTML = markup;
+    expect(root.querySelector('.vfs-node-item__semantic-icon')?.textContent).toBe('<unsafe>');
+    expect(root.querySelector('[role=img]')?.getAttribute('aria-label')).toBe('Image "generation"');
+    expect(root.querySelector('unsafe')).toBeNull();
+});

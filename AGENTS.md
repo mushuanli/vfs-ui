@@ -61,3 +61,5 @@ src/
 - `showItemMenu` 的 VFS 目标从授权 driver 按路径解析，不能依赖侧栏可见性或展开状态；执行前重新读取节点及权限。`contextMenu.mapItem` 仅注入宿主的单项展示映射，库不识别项目/Session 路径。菜单项 `iconOnly` 保留 title/aria-label，缺少图标时显示名称。
 
 - 手机和触屏工具栏将现有导入/导出控件移入更多菜单，宽屏恢复原位置，不复制动作和权限状态；菜单支持 Escape、点击外部和执行后关闭。`appearance.showTitle: false` 供已有外围标题的宿主隐藏标准标题行；抽屉标题单行省略，自定义标题布局仍由宿主负责。
+
+NodePresentation.indicators 是宿主提供的通用语义图标（icon 为文本、label 为说明），始终与文件标题同行展示，不受 showTags/showBadges 影响。图标与说明均转义，保留 role/img、aria-label 和 title；库不解释模型等业务能力。NodePresentation.showTags=false 可单独隐藏该行标签，仍保留标签的搜索与筛选行为。

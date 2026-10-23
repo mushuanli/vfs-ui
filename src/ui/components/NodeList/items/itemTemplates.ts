@@ -108,7 +108,7 @@ export const createFileItemHTML = (
     ? (file.presentation?.badges ?? []).map(label => `<span class="vfs-badge">${escapeHTML(label)}</span>`).join('') : '';
 
   const tagsHTML =
-    uiSettings.showTags && tags.length > 0
+    uiSettings.showTags && file.presentation?.showTags !== false && tags.length > 0
       ? tags.map(tag => `<span class="vfs-tag-pill">${escapeHTML(ui.tagLabel?.(tag) ?? tag)}</span>`).join('')
       : '';
 
@@ -147,6 +147,7 @@ export const createFileItemHTML = (
           <div class="vfs-node-item__body">
             <div class="vfs-node-item__row-primary">
               <span class="vfs-node-item__title" title="${escapeHTML(title)}">${highlight(title, searchQueries)}</span>
+              ${(file.presentation?.indicators ?? []).map(({icon, label}) => `<span class="vfs-node-item__semantic-icon" role="img" aria-label="${escapeHTML(label)}" title="${escapeHTML(label)}">${escapeHTML(icon)}</span>`).join('')}
               ${isPinned ? `<span class="vfs-node-item__pin" aria-hidden="true">${ui.icon('pin')}</span>` : ''}
               ${hasWaitingInput ? `<span class="vfs-node-item__indicator vfs-node-item__indicator--waiting" title="${escapeHTML(hasWaitingInput)}"></span>` : ''}
               ${hasUnreadUpdate && !hasWaitingInput ? '<span class="vfs-node-item__indicator"></span>' : ''}

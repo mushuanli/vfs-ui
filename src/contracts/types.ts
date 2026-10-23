@@ -32,6 +32,10 @@ export interface NodePresentation {
   fileDetails?: boolean;
   subtitle?: string;
   badges?: readonly string[];
+  /** Host-supplied semantic icons, shown beside the title independently of tag preferences. */
+  indicators?: readonly {icon: string; label: string}[];
+  /** Hide visible pills while retaining tag metadata for queries. */
+  showTags?: boolean;
   attention?: string;
   unread?: boolean;
 }
