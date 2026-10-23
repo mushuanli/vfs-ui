@@ -54,6 +54,7 @@ export interface VFSUIShellOptions extends BrowserBaseOptions, VFSRowActionOptio
   titleHeader?: HTMLElement;
   /** Mount the existing toolbar controls in a host header. */
   toolbarContainer?: HTMLElement;
+  navigationHeader?: import('../contracts/components').VFSNavigationHeader;
   onError?: (error: unknown) => void;
   /**
    * Where the versioned UI snapshot is kept. `true` opts into the bundled
@@ -575,7 +576,7 @@ export class VFSUIShell {
         this.options.searchPlaceholder || 'Search (tag:xx type:file|dir)...',
       fileCreation: this.options.fileCreation,
       listItems: this.options.listItems, listHeader: this.options.listHeader, cardDirectory: this.options.cardDirectory, directoryPreview: this.options.directoryPreview,
-      titleHeader: this.options.titleHeader, toolbarContainer: this.options.toolbarContainer,
+      titleHeader: this.options.titleHeader, toolbarContainer: this.options.toolbarContainer, navigationHeader: this.options.navigationHeader,
       title: this.options.title,
       toolbar: this.options.toolbar, toolbarOptions: this.options.toolbarOptions,
       activateDirectories: this.options.activateDirectories,

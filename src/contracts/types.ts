@@ -34,6 +34,9 @@ export interface NodePresentation {
   badges?: readonly string[];
   /** Host-supplied semantic icons, shown beside the title independently of tag preferences. */
   indicators?: readonly {icon: string; label: string}[];
+  indicatorPlacement?: 'title' | 'subtitle';
+  /** Muted presentation remains selectable and does not change resource permissions. */
+  muted?: boolean;
   /** Hide visible pills while retaining tag metadata for queries. */
   showTags?: boolean;
   attention?: string;

@@ -5,7 +5,7 @@ import { createVFSUI } from '../src';
 
 afterEach(() => { document.body.replaceChildren(); vi.unstubAllGlobals(); });
 
-async function fixture() {
+async function fixture(extra: Partial<Parameters<typeof createVFSUI>[0]> = {}) {
     const media = Object.assign(new EventTarget(), { matches: true });
     vi.stubGlobal('matchMedia', vi.fn(() => media));
     vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => setTimeout(fn, 0));
@@ -15,7 +15,7 @@ async function fixture() {
     const container = document.createElement('div'); document.body.append(container);
     const report = vi.fn(), run = vi.fn(async () => {});
     const ui = createVFSUI({sessionListContainer: container, persistence: false, autoSelectFirst: false,
-        onError: report, toolbarOptions: {actions: {import: run, export: run}}}, fs);
+        onError: report, toolbarOptions: {actions: {import: run, export: run}}, ...extra}, fs);
     await ui.start();
     return {ui, media, container, run, report, async destroy() {ui.destroy(); await manager.dispose();}};
 }
@@ -63,5 +63,24 @@ it('keeps disabled actions disabled in the menu', async () => {
         f.ui.setToolbar({items: [{id: 'import', label: 'Load', disabled: true}]});
         const button = f.container.querySelector<HTMLButtonElement>('.vfs-toolbar-overflow [data-action="import"]')!;
         expect(button.disabled).toBe(true); button.click(); expect(f.run).not.toHaveBeenCalled();
+    } finally {await f.destroy();}
+});
+
+it('shares one navigator menu with host actions on desktop and keeps handlers after toolbar updates', async () => {
+    const root = document.createElement('details'), content = document.createElement('div'), host = document.createElement('button');
+    host.textContent = 'Project settings'; const run = vi.fn(); host.onclick = run; content.append(host); root.append(content);
+    const filter = document.createElement('button'), summary = document.createElement('div');
+    const f = await fixture({navigationHeader: {menu: {root, content}, filter, summary}});
+    try {
+        f.media.matches = false; f.media.dispatchEvent(new Event('change'));
+        expect(f.container.querySelectorAll('details.vfs-toolbar-overflow')).toHaveLength(1);
+        expect(root.hidden).toBe(false); expect(root.contains(host)).toBe(true);
+        expect(root.contains(f.container.querySelector('[data-action="create-file"]'))).toBe(false);
+        expect(root.contains(f.container.querySelector('[data-action="refresh"]'))).toBe(true);
+        expect(filter.parentElement?.classList.contains('vfs-node-list__header')).toBe(true);
+        f.ui.setToolbar({hiddenActions: ['create-directory'], actions: {export: f.run}, secondary: {label: 'Organize', run}});
+        expect(root.contains(host)).toBe(true); host.click(); expect(run).toHaveBeenCalledOnce();
+        root.querySelector<HTMLButtonElement>('[data-action="secondary"]')!.click(); expect(run).toHaveBeenCalledTimes(2);
+        root.querySelector<HTMLButtonElement>('[data-action="export"]')!.click(); await vi.waitFor(() => expect(f.run).toHaveBeenCalledOnce());
     } finally {await f.destroy();}
 });

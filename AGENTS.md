@@ -62,4 +62,6 @@ src/
 
 - 手机和触屏工具栏将现有导入/导出控件移入更多菜单，宽屏恢复原位置，不复制动作和权限状态；菜单支持 Escape、点击外部和执行后关闭。`appearance.showTitle: false` 供已有外围标题的宿主隐藏标准标题行；抽屉标题单行省略，自定义标题布局仍由宿主负责。
 
-NodePresentation.indicators 是宿主提供的通用语义图标（icon 为文本、label 为说明），始终与文件标题同行展示，不受 showTags/showBadges 影响。图标与说明均转义，保留 role/img、aria-label 和 title；库不解释模型等业务能力。NodePresentation.showTags=false 可单独隐藏该行标签，仍保留标签的搜索与筛选行为。
+NodePresentation.indicators 是宿主提供的通用语义图标（icon 为文本、label 为说明），默认与文件标题同行展示；indicatorPlacement:subtitle 可放在副标题旁，muted 仅灰显而不禁用操作，不受 showTags/showBadges 影响。图标与说明均转义，保留 role/img、aria-label 和 title；库不解释模型等业务能力。NodePresentation.showTags=false 可单独隐藏该行标签，仍保留标签的搜索与筛选行为。
+
+NodeList 的 navigationHeader 插槽接收主操作、筛选、摘要、结果与可选共享菜单容器；次要操作移动原按钮到菜单，不复制动作。宿主负责搜索和业务状态，库只管理统一布局与响应式展示。

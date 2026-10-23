@@ -38,6 +38,7 @@ interface NodeListOptions extends BaseComponentDeps, VFSRowActionOptions {
   listHeader?: HTMLElement;
   titleHeader?: HTMLElement;
   toolbarContainer?: HTMLElement;
+  navigationHeader?: import('../../../contracts/components').VFSNavigationHeader;
   rootPath?: () => string | null;
   cardDirectory?: (node: VFSNodeUI) => boolean;
   directoryPreview?: (node: VFSNodeUI) => number | DirectoryPreviewOptions | undefined;
@@ -98,6 +99,7 @@ export class NodeList extends BaseComponent<NodeListState> {
   private readonly toolbar: NodeListOptions['toolbar'];
   private toolbarOptions: VFSToolbarOptions;
   private toolbarOverflow?: ToolbarOverflow;
+  private readonly navigationHeader?: NodeListOptions['navigationHeader'];
   private readonly cardDirectory?: (node: VFSNodeUI) => boolean;
   private readonly fileCreation?: FileCreationConfig;
   private readonly directoryActions?: DirectoryActions;
@@ -111,6 +113,7 @@ export class NodeList extends BaseComponent<NodeListState> {
     super(options);
     this.onActivate = options.onActivate;
     this.onRefresh = options.onRefresh;
+    this.navigationHeader = options.navigationHeader;
     this.container.classList.toggle('vfs-ui--hide-timestamps', options.appearance?.showTimestamp === false);
     this.container.classList.toggle('vfs-ui--menus-always', options.appearance?.menuVisibility === 'always');
     this.container.classList.toggle('vfs-ui--menus-hover', options.appearance?.menuVisibility === 'hover');
@@ -149,9 +152,10 @@ export class NodeList extends BaseComponent<NodeListState> {
     this.footerEl = this.container.querySelector('.vfs-node-list__footer')!;
     if (options.toolbar === 'compact') this.installCompactToolbar();
     this.setToolbarOptions(this.toolbarOptions);
-    if (options.toolbar !== 'compact') this.toolbarOverflow = new ToolbarOverflow(this.newControlsEl, this.ui);
+    if (options.toolbar !== 'compact') this.toolbarOverflow = new ToolbarOverflow(this.newControlsEl, this.ui, options.navigationHeader);
     if (options.listHeader) this.newControlsEl.after(options.listHeader);
     options.toolbarContainer?.append(this.newControlsEl);
+    if (options.navigationHeader) this.installNavigationHeader(options);
 
     this.selectionHandler = new SelectionHandler(this.commandBus);
 
@@ -268,14 +272,25 @@ export class NodeList extends BaseComponent<NodeListState> {
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--single-create', !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.classList.toggle('vfs-node-list__new-controls--transfer-only', !!options.hiddenActions?.includes('create-file') && !!options.hiddenActions?.includes('create-directory'));
     this.newControlsEl.innerHTML = toolbarHTML(options, this.fileCreation?.label ?? this.ui.t('vfs.toolbar.file'), this.ui);
-    this.toolbarOverflow?.refresh();
-    this.syncCreationControls();
     this.container.querySelector('.vfs-node-list__secondary-action')?.remove();
     if (options.secondary) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'vfs-node-list__secondary-action';
       button.textContent = options.secondary.label; button.onclick = options.secondary.run;
-      this.container.querySelector('.vfs-node-list__title-bar')?.append(button);
+      if (this.navigationHeader) { button.dataset.action = 'secondary'; this.newControlsEl.append(button); }
+      else this.container.querySelector('.vfs-node-list__title-bar')?.append(button);
     }
+    this.toolbarOverflow?.refresh();
+    this.syncCreationControls();
+  }
+
+  private installNavigationHeader(options: NodeListOptions): void {
+    this.mainContainerEl.classList.add('vfs-node-list--navigator');
+    const title = this.container.querySelector('.vfs-node-list__title-bar')!;
+    if (!options.toolbarContainer) title.append(this.newControlsEl);
+    const search = this.container.querySelector('.vfs-node-list__header')!;
+    if (options.navigationHeader?.filter) search.append(options.navigationHeader.filter);
+    if (options.navigationHeader?.summary) search.after(options.navigationHeader.summary);
+    if (options.navigationHeader?.results) (options.navigationHeader.summary ?? search).after(options.navigationHeader.results);
   }
 
   refreshView(): void { this.state = this.transformState(this.store.getState()); this.render(); }

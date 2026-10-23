@@ -28,6 +28,14 @@ export interface VFSListAppearance {
     showTimestamp?: boolean;
     menuVisibility?: 'hover' | 'always';
 }
+/** Optional slots for a two-row scope/actions and search/filter navigator. */
+export interface VFSNavigationHeader {
+    primaryAction?: string;
+    filter?: HTMLElement;
+    summary?: HTMLElement;
+    results?: HTMLElement;
+    menu?: { root: HTMLDetailsElement; content: HTMLElement };
+}
 export interface ResourceListOptions<T extends object = VFSNodeUI> {
     sessionListContainer: HTMLElement; documentOutlineContainer?: HTMLElement; initialState?: object;
     contextMenu?: ContextMenuConfig<T>; readOnly?: boolean; initialSidebarCollapsed?: boolean;

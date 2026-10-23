@@ -10,6 +10,7 @@ export interface DrawerSearchOptions {
 export interface DrawerOptions {
     title: string;
     showHeader?: boolean;
+    mobileHeader?: boolean;
     collapsible?: boolean;
     collapsed?: boolean;
     scrollMode?: 'content' | 'host';
@@ -35,6 +36,7 @@ export class Drawer {
         this.body.className = 'vfs-drawer__body'; this.content.className = 'vfs-drawer__content';
         try {
             if (options.showHeader !== false) this.header();
+            this.element.classList.toggle('vfs-drawer--mobile-headerless', options.mobileHeader === false);
             if (options.search) this.addSearch(options.search);
             this.body.append(this.content); this.element.append(this.body);
             this.setCollapsed(options.collapsed ?? false);

@@ -19,3 +19,6 @@
     .vfs-drawer__title, .vfs-drawer__actions > button, .vfs-drawer__search { min-height: 44px; }
     .vfs-drawer__actions > button { width: 44px; }
 }
+@media (max-width: 768px) {
+    .vfs-drawer--mobile-headerless > .vfs-drawer__header { display: none; }
+}

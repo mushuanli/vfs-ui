@@ -88,6 +88,10 @@ export const createFileItemHTML = (
   const { unread: hasUnreadUpdate, attention: hasWaitingInput } = file.presentation ?? {};
   const summary = content?.summary || '';
   const connLabel = file.presentation?.subtitle;
+  const icons = (file.presentation?.indicators ?? []).map(({icon, label}) => `<span class="vfs-node-item__semantic-icon" role="img" aria-label="${escapeHTML(label)}" title="${escapeHTML(label)}">${escapeHTML(icon)}</span>`).join('');
+  const subtitleIcons = file.presentation?.indicatorPlacement === 'subtitle';
+  const subtitleHTML = subtitleIcons ? `<div class="vfs-node-item__conn-label vfs-node-item__conn-label--indicators"><span class="vfs-node-item__subtitle">${escapeHTML(connLabel ?? '')}</span>${connLabel && icons ? '<span aria-hidden="true">·</span>' : ''}${icons}</div>`
+    : connLabel ? `<div class="vfs-node-item__conn-label">${escapeHTML(connLabel)}</div>` : '';
   const isReadOnly = policy.readOnly;
 
   const deleteBtnHTML = policy.inlineDelete ? createQuickDeleteHTML(isConfirmingDelete, ui) : '';
@@ -138,7 +142,7 @@ export const createFileItemHTML = (
     : '';
 
   return `
-    <div class="vfs-node-item ${file.presentation?.fileDetails ? 'vfs-node-item--file-details' : ''}" data-item-id="${id}" data-item-type="file">
+    <div class="vfs-node-item ${file.presentation?.fileDetails ? 'vfs-node-item--file-details' : ''} ${file.presentation?.muted ? 'vfs-node-item--muted' : ''}" data-item-id="${id}" data-item-type="file">
       <div class="vfs-node-item__main-row ${isSelectionMode ? 'is-selection-mode' : ''}">
         ${checkboxHTML}
         <div class="vfs-node-item__content ${isActive ? 'is-active' : ''} ${isSelected ? 'is-selected' : ''}" data-action="select-and-open">
@@ -147,12 +151,12 @@ export const createFileItemHTML = (
           <div class="vfs-node-item__body">
             <div class="vfs-node-item__row-primary">
               <span class="vfs-node-item__title" title="${escapeHTML(title)}">${highlight(title, searchQueries)}</span>
-              ${(file.presentation?.indicators ?? []).map(({icon, label}) => `<span class="vfs-node-item__semantic-icon" role="img" aria-label="${escapeHTML(label)}" title="${escapeHTML(label)}">${escapeHTML(icon)}</span>`).join('')}
+              ${subtitleIcons ? '' : icons}
               ${isPinned ? `<span class="vfs-node-item__pin" aria-hidden="true">${ui.icon('pin')}</span>` : ''}
               ${hasWaitingInput ? `<span class="vfs-node-item__indicator vfs-node-item__indicator--waiting" title="${escapeHTML(hasWaitingInput)}"></span>` : ''}
               ${hasUnreadUpdate && !hasWaitingInput ? '<span class="vfs-node-item__indicator"></span>' : ''}
             </div>
-            ${connLabel ? `<div class="vfs-node-item__conn-label">${escapeHTML(connLabel)}</div>` : ''}
+            ${subtitleHTML}
             <div class="vfs-node-item__row-secondary">
               <div class="vfs-node-item__secondary-left">
                 ${summaryHTML}

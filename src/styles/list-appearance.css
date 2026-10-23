@@ -80,3 +80,20 @@
     .vfs-node-item__creation, .vfs-ui--menus-hover [data-action="item-menu"] { opacity: 1; }
     .vfs-node-list__new-controls--plain .vfs-node-list__new-btn { min-height: 44px; height: 44px; }
 }
+
+/* Navigator slots share one layout on desktop and mobile. */
+.vfs-node-list--navigator > .vfs-node-list__title-bar { box-sizing: border-box; min-height: 56px; height: 56px; padding: 6px 10px; gap: 6px; overflow: visible; }
+.vfs-node-list--navigator > .vfs-node-list__header { display: flex; flex-direction: row; align-items: center; gap: 8px; box-sizing: border-box; min-height: 56px; height: 56px; padding: 6px 10px; }
+.vfs-node-list--navigator .vfs-node-list__search { flex: 1; width: 0; min-width: 0; height: 44px; box-sizing: border-box; }
+.vfs-node-list--navigator .vfs-node-list__title { flex: 1; min-width: 0; }
+.vfs-node-list--navigator .vfs-node-list__new-controls { display: flex; flex: 0 0 auto; flex-wrap: nowrap; align-items: center; gap: 4px; padding: 0; margin: 0; width: auto; border: 0; }
+.vfs-node-list--navigator .vfs-node-list__toolbar-group { display: contents; }
+.vfs-node-list--navigator .vfs-node-list__new-btn { min-height: 44px; width: auto; flex: 0 0 auto; }
+.vfs-node-list--navigator .vfs-node-list__new-btn[data-action^="create-"] .vfs-node-list__button-label { display: inline; }
+.vfs-node-list--navigator .vfs-toolbar-overflow__actions { display: flex; flex-direction: column; }
+.vfs-node-list--navigator .vfs-toolbar-overflow__items { min-width: 200px; max-width: calc(100vw - 32px); max-height: 70vh; overflow: auto; }
+.vfs-node-list--navigator .vfs-toolbar-overflow__items button { display: flex; align-items: center; justify-content: flex-start; gap: 8px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 5px; color: inherit; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.vfs-node-list--navigator .vfs-toolbar-overflow__items button[hidden] { display: none; }
+.vfs-node-list--navigator .vfs-toolbar-overflow__items button:disabled { opacity: .5; cursor: default; }
+.vfs-node-list--navigator .vfs-toolbar-overflow__items button:hover:not(:disabled) { background: var(--vfs-active-bg, #eef2ff); }
+.vfs-node-list--navigator .vfs-toolbar-overflow__items .vfs-node-list__button-label { display: inline; }

@@ -61,3 +61,19 @@ it('shows host semantic icons even with badges and tags hidden, and escapes labe
     expect(root.querySelector('[role=img]')?.getAttribute('aria-label')).toBe('Image "generation"');
     expect(root.querySelector('unsafe')).toBeNull();
 });
+
+it('puts semantic icons after the subtitle and keeps a muted resource selectable', async () => {
+    const {createFileItemHTML} = await import('../src/ui/components/NodeList/items/itemTemplates');
+    const markup = createFileItemHTML({id: '/connection', type: 'file', icon: '', version: '1',
+        metadata: {title: 'Connection', path: '/connection', tags: [], parentPath: '/', createdAt: '', lastModified: '', custom: {}},
+        presentation: {subtitle: 'Model <primary>', indicatorPlacement: 'subtitle', muted: true, indicators: [{icon: '<image>', label: 'Image "generation"'}]}},
+        {uiSettings: {showTags: false, showBadges: false}, searchQueries: []} as never, {readOnly: false} as never);
+    const root = container(); root.innerHTML = markup;
+    expect(root.querySelector('.vfs-node-item--muted')).not.toBeNull();
+    expect(root.querySelector('.vfs-node-item__row-primary [role=img]')).toBeNull();
+    expect(root.querySelector('.vfs-node-item__conn-label')?.textContent).toBe('Model <primary>·<image>');
+    expect(root.querySelector('.vfs-node-item__conn-label [role=img]')?.getAttribute('aria-label')).toBe('Image "generation"');
+    expect(root.querySelector('[aria-disabled=true]')).toBeNull();
+    expect(root.querySelector('primary, image')).toBeNull();
+    expect(root.querySelector('[data-action=select-and-open]')).not.toBeNull();
+});
